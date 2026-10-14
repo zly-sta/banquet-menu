@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宴席排菜单</title>
+<script src="html2canvas.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.1.0/style.css">
+<style>
+:root{
+  --bg:#f2f3f5;--card:#fff;--line:#e4e6eb;--text:#25272b;--sub:#8a8f99;
+  --brand:#8c1c1c;--brand2:#c0392b;--radius:10px;
+  --ui-font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:var(--ui-font);background:var(--bg);color:var(--text);
+  font-size:14px;line-height:1.4}
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px;
+  padding:8px 14px;background:linear-gradient(135deg,#7c1616,#a52a2a);color:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);flex-wrap:wrap}
+.brand{font-weight:700;font-size:15px;letter-spacing:1px}
+.tabs{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap;align-items:center}
+.tabs button{background:rgba(255,255,255,.15);border:0;color:#fff;padding:6px 12px;
+  border-radius:999px;cursor:pointer;font-size:12.5px;font-family:inherit}
+.tabs button:hover{background:rgba(255,255,255,.28)}
+.tabs button.active{background:#fff;color:var(--brand);font-weight:600}
+#btnCheckUpdate{background:rgba(255,255,255,.18);border:0;color:#fff;
+  font-size:15px;cursor:pointer;padding:5px 9px;border-radius:999px;
+  transition:.2s;margin-left:4px}
+#btnCheckUpdate:hover{background:rgba(255,255,255,.3)}
+#btnCheckUpdate.hasNew{background:#ffd76a;color:#8a6d00}
+#btnExit{background:transparent;border:0;color:rgba(255,255,255,.7);
+  font-size:12.5px;cursor:pointer;padding:6px 10px;border-radius:999px}
+#btnExit:hover{background:rgba(255,255,255,.15);color:#fff}
+.save-hint{font-size:11.5px;color:rgba(255,255,255,.85);padding:3px 9px;
+  border-radius:999px;background:rgba(0,0,0,.15);transition:.3s}
+.save-hint.flash{background:#4caf50;color:#fff}
+main{padding:10px;max-width:1500px;margin:0 auto}
+.view{display:none}.view.active{display:block}
+.card{background:var(--card);border-radius:var(--radius);padding:10px 13px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:9px}
+.card h3{margin:0 0 7px;font-size:12.5px;color:var(--brand);font-weight:700}
+label.fld{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-bottom:4px;font-size:12.5px;color:#555;min-height:26px}
+label.fld:last-child{margin-bottom:0}
+label.fld input,label.fld select{padding:4px 8px;border:1px solid var(--line);
+  border-radius:6px;font-size:12.5px;font-family:inherit;color:var(--text);
+  background:#fafbfc;flex:1;max-width:170px;min-width:0;height:26px}
+label.fld input:focus,label.fld select:focus{
+  outline:2px solid rgba(140,28,28,.18);border-color:var(--brand2)}
+input[type=color]{width:40px;height:26px;padding:1px;border:1px solid var(--line);
+  border-radius:6px;background:#fff;cursor:pointer}
+input[type=range]{flex:1;max-width:130px;accent-color:var(--brand2)}
+label.chk{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:12.5px;
+  color:#555;cursor:pointer;user-select:none;min-height:22px}
+label.chk input{width:15px;height:15px;accent-color:var(--brand2);cursor:pointer}
+.btn{padding:6px 11px;border-radius:7px;border:1px solid var(--line);background:#fff;
+  cursor:pointer;font-size:12.5px;font-family:inherit;color:var(--text)}
+.btn:hover{border-color:var(--brand2);color:var(--brand2)}
+.btn.primary{background:linear-gradient(135deg,#a52a2a,#c0392b);color:#fff;border:0;font-weight:600}
+.btn.primary:hover{opacity:.9;color:#fff}
+.btn.block{width:100%;padding:10px;font-size:14px}
+.btn.tiny{padding:3px 8px;font-size:11.5px;border-radius:6px}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+#gate{position:fixed;inset:0;background:var(--bg);z-index:500;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px}
+#gate.hide{display:none}
+#gate h1{margin:0;font-size:26px;color:var(--brand);font-weight:700;letter-spacing:2px}
+#gate .sub{color:var(--sub);font-size:14px;margin-top:-18px}
+.gate-btns{display:flex;gap:22px;flex-wrap:wrap;justify-content:center}
+.gate-btns button{width:180px;height:140px;border-radius:16px;border:2px solid var(--line);
+  background:#fff;cursor:pointer;font-family:inherit;font-size:20px;color:var(--text);
+  font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;transition:.2s;box-shadow:0 4px 12px rgba(0,0,0,.05)}
+.gate-btns button:hover{border-color:var(--brand2);color:var(--brand2);
+  transform:translateY(-3px);box-shadow:0 8px 20px rgba(140,28,28,.15)}
+.gate-btns button .icon{font-size:44px;line-height:1}
+
+.front-grid{display:grid;grid-template-columns:3fr 7fr;gap:9px;align-items:start}
+@media(max-width:900px){ .front-grid{ grid-template-columns:1fr; } }
+.right-top{display:grid;grid-template-columns:4fr 4fr 2fr;gap:9px;align-items:start}
+@media(max-width:1100px){ .right-top{ grid-template-columns:1fr 1fr; } }
+@media(max-width:700px){ .right-top{ grid-template-columns:1fr; } }
+
+#pickedList, #libList, .cat-tabs,
+#view-front .card h3, #view-front label.fld, #view-front label.chk,
+#view-front .btn, #view-front .search-row input{ font-size:19px; }
+#view-front .card h3{ font-size:20px; }
+#view-front label.fld input, #view-front label.fld select{ font-size:19px; height:36px; padding:6px 10px; }
+#view-front .btn{ padding:9px 16px; font-size:19px; }
+#view-front .btn.tiny{ font-size:15px; padding:5px 11px; }
+#view-front .search-row input{ padding:10px 13px; height:40px; }
+
+.cat-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.cat-tabs button{font-size:19px;padding:6px 16px;border-radius:999px;
+  border:1px solid var(--line);background:#fff;cursor:pointer;font-family:inherit;color:#555}
+.cat-tabs button:hover{border-color:var(--brand2);color:var(--brand2)}
+.cat-tabs button.active{background:linear-gradient(135deg,#a52a2a,#c0392b);
+  color:#fff;border:0;font-weight:600}
+
+.dish-lib{display:grid;grid-template-columns:repeat(4, 1fr);gap:7px}
+@media(max-width:1100px){ .dish-lib{grid-template-columns:repeat(3,1fr);} }
+@media(max-width:700px){ .dish-lib{grid-template-columns:repeat(2,1fr);} }
+.lib-item{display:flex;justify-content:space-between;align-items:center;gap:6px;
+  border:1px solid var(--line);cursor:pointer;background:#fff;user-select:none;
+  overflow:hidden;font-size:22px;padding:10px 12px;border-radius:8px}
+.lib-item:hover{border-color:var(--brand2);background:#fff7f5}
+.lib-item:active{transform:scale(.97)}
+.lib-item .p{color:var(--brand2);font-weight:600;white-space:nowrap;font-size:20px}
+.lib-item > span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.search-row{display:flex;gap:8px;margin-top:9px}
+.search-row input{flex:1;border:1px solid var(--line);font-family:inherit;border-radius:9px}
+
+.picked-list{display:flex;flex-direction:column;max-height:calc(100vh - 220px);overflow:auto}
+.picked-item{display:flex;align-items:center;border-bottom:1px dashed var(--line);
+  cursor:grab;font-size:22px;padding:10px 4px;gap:8px}
+.picked-item:last-child{border-bottom:0}
+.picked-item.dragging{opacity:.35}
+.picked-item.over{box-shadow:inset 0 3px 0 var(--brand2)}
+.grip{color:#c9ccd3;font-size:20px}
+.pi-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:22px}
+.pi-cat{color:var(--sub);font-size:15px;margin-left:6px}
+.pi-dots{display:flex;gap:4px;flex:0 0 auto;align-items:center}
+.pi-dot{width:22px;height:22px;border-radius:50%;border:2px solid #fff;
+  box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0;background:transparent;
+  transition:.15s;flex:0 0 auto}
+.pi-dot:hover{transform:scale(1.15)}
+.pi-dot.active{box-shadow:0 0 0 2px var(--brand2),0 0 0 3px #fff}
+.qty{display:flex;align-items:center;gap:3px}
+.qty button{width:34px;height:34px;font-size:21px;border-radius:6px;
+  border:1px solid var(--line);background:#fff;cursor:pointer;color:#555;padding:0;line-height:1}
+.qty button:hover{border-color:var(--brand2);color:var(--brand2)}
+.qty-input{width:56px;height:34px;font-size:22px;text-align:center;
+  border:1px solid var(--line);border-radius:6px;background:#fafbfc;
+  font-family:inherit;color:var(--text);padding:0 4px}
+.qty-input:focus{outline:2px solid rgba(140,28,28,.18);border-color:var(--brand2)}
+.pi-price{color:var(--brand2);font-weight:600;text-align:right;font-size:22px;min-width:70px}
+.del{border:0;background:transparent;color:#c9ccd3;cursor:pointer;font-size:20px;padding:3px 8px}
+.del:hover{color:#e74c3c}
+.empty{color:var(--sub);text-align:center;padding:14px 0;font-size:19px}
+
+.stat-card{display:flex;justify-content:space-between;text-align:center;padding:6px 0 0;
+  border-top:1px solid var(--line);margin-top:8px}
+.stat{flex:1;min-width:0;padding:0 3px;border-right:1px dashed var(--line)}
+.stat:last-child{border-right:0}
+.stat span{display:block;color:var(--sub);margin-bottom:2px;font-size:13px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{color:var(--brand2);white-space:nowrap;font-size:19px}
+
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
+.admin-grid .card.full{ grid-column:1 / -1; margin-bottom:0; }
+.admin-grid .card{ margin-bottom:0; }
+@media(max-width:900px){
+  .admin-grid{ grid-template-columns:1fr; }
+  .admin-grid .card.full{ grid-column:auto; }
+}
+.two-col{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:0}
+@media(max-width:700px){ .two-col{ grid-template-columns:1fr; } }
+
+details.card-fold{background:var(--card);border-radius:var(--radius);padding:10px 13px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:0}
+details.card-fold > summary{cursor:pointer;font-size:12.5px;color:var(--brand);
+  font-weight:700;list-style:none;padding:2px 0;display:flex;align-items:center;
+  gap:6px;user-select:none}
+details.card-fold > summary::before{content:'▸';font-size:11px;color:var(--sub)}
+details.card-fold[open] > summary::before{content:'▾'}
+details.card-fold > summary::-webkit-details-marker{display:none}
+details.card-fold .fold-body{margin-top:8px}
+
+details.advanced{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+details.advanced > summary{cursor:pointer;font-size:11.5px;color:var(--sub);
+  list-style:none;padding:2px 0}
+details.advanced > summary::before{content:'▸ ';}
+details.advanced[open] > summary::before{content:'▾ ';}
+details.advanced .two-col{margin-top:6px}
+
+.admin-dish-grid{display:grid;grid-template-columns:repeat(8, minmax(0, 1fr));
+  gap:6px;margin-top:6px}
+@media(max-width:1400px){ .admin-dish-grid{grid-template-columns:repeat(6,minmax(0,1fr));} }
+@media(max-width:1100px){ .admin-dish-grid{grid-template-columns:repeat(4,minmax(0,1fr));} }
+@media(max-width:750px){ .admin-dish-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+.admin-dish-card{border:1px solid var(--line);border-radius:8px;padding:6px 8px;
+  background:#fff;display:flex;flex-direction:column;gap:6px;transition:.15s;position:relative}
+.admin-dish-card:hover{border-color:var(--brand2);background:#fff7f5}
+.admin-dish-card.selecting{cursor:pointer}
+.admin-dish-card.selected{border-color:var(--brand2);background:#fff0eb;
+  box-shadow:0 0 0 2px rgba(192,57,43,.15)}
+.admin-dish-card .row1{display:flex;align-items:center;gap:6px}
+.admin-dish-card .row1 input.nm{flex:1;min-width:0;width:100%;padding:5px 8px;
+  border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit;
+  font-weight:600;text-align:center}
+.admin-dish-card .row2{display:flex;align-items:center;gap:6px}
+.admin-dish-card .row2 input.pr{flex:1;min-width:0;width:100%;padding:4px 8px;
+  border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;
+  text-align:right;color:var(--brand2);font-weight:600}
+.admin-dish-card .row2 select.cat{flex:1;min-width:0;width:100%;padding:4px 8px;
+  border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit}
+.admin-dish-card .chk{width:20px;height:20px;flex:0 0 auto;cursor:pointer;
+  accent-color:var(--brand2);display:none}
+.admin-dish-card.selecting .chk{display:block}
+.admin-dish-card.selecting input,
+.admin-dish-card.selecting select{pointer-events:none;opacity:.75}
+
+.cat-filter{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 2px}
+.cat-filter button{padding:4px 11px;border-radius:999px;border:1px solid var(--line);
+  background:#fff;cursor:pointer;font-size:12.5px;font-family:inherit;color:#555}
+.cat-filter button:hover{border-color:var(--brand2);color:var(--brand2)}
+.cat-filter button.active{background:linear-gradient(135deg,#a52a2a,#c0392b);
+  color:#fff;border:0;font-weight:600}
+
+.bulk-bar{display:none;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:8px 10px;background:#fff7e6;border:1px solid #ffd76a;
+  border-radius:8px;margin-top:8px}
+.bulk-bar.show{display:flex}
+
+.dish-add{display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap}
+.dish-add input,.dish-add select{padding:6px 9px;border:1px solid var(--line);
+  border-radius:7px;font-size:12.5px;font-family:inherit;height:28px}
+.dish-add input:first-child{flex:1;min-width:120px}
+textarea{width:100%;padding:7px;border:1px solid var(--line);border-radius:7px;
+  font-family:inherit;font-size:12.5px;resize:vertical;margin:5px 0}
+details:not(.card-fold):not(.advanced) summary{cursor:pointer;font-size:12.5px;
+  color:var(--sub);margin-bottom:4px}
+.row-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.swatches{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0}
+.swatches button{width:22px;height:22px;border-radius:5px;border:1px solid var(--line);
+  cursor:pointer;padding:0}
+.preview-bar{display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap}
+.hint{color:var(--sub);font-size:11.5px}
+
+.saved-list{display:flex;flex-direction:column;gap:6px;margin-top:9px;
+  max-height:260px;overflow:auto}
+.saved-row{display:flex;align-items:center;gap:7px;padding:8px 9px;
+  border:1px solid var(--line);border-radius:7px;font-size:18px}
+.saved-row .sname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.saved-row .btn.tiny{padding:5px 11px;font-size:15px}
+.saved-row .btn.tiny.del{font-size:17px;padding:4px 8px}
+
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;
+  display:none;align-items:center;justify-content:center}
+.mask.show{display:flex}
+.mask .box{background:#fff;border-radius:12px;padding:22px 24px;width:340px;
+  max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.mask .box h3{margin:0 0 14px;font-size:16px;color:var(--brand);font-weight:700}
+.mask .box input,.mask .box select{width:100%;padding:10px 12px;border:1px solid var(--line);
+  border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:14px}
+.mask .box input:focus,.mask .box select:focus{
+  outline:2px solid rgba(140,28,28,.18);border-color:var(--brand2)}
+.mask .box .row-btns{margin-top:0;justify-content:flex-end}
+.mask .box .btn{padding:8px 18px;font-size:14px}
+
+.preview-banner{background:#fff7e6;border:1px solid #ffd76a;border-radius:8px;
+  padding:8px 12px;margin-bottom:9px;display:flex;align-items:center;gap:10px;
+  font-size:13px;color:#8a6d00}
+.preview-banner .btn{margin-left:auto}
+
+#paperStage{position:relative;width:100%;overflow:hidden}
+#paperScaler{position:absolute;top:0;left:0;transform-origin:top left}
+#paper{width:297mm;height:210mm;background:#fff;position:relative;overflow:hidden;
+  box-shadow:0 8px 30px rgba(0,0,0,.16);border-radius:2px;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.p-overlay{position:absolute;inset:0;z-index:1;pointer-events:none}
+.p-content{position:absolute;inset:0;z-index:2}
+.p-info{position:absolute;display:flex;flex-direction:column;align-items:center;
+  gap:0;flex-wrap:nowrap}
+.p-info .seg-v{display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
+.p-info .seg-v > div{line-height:1;white-space:pre}
+.p-cols{position:absolute;left:0;right:0;display:flex;flex-direction:row-reverse;
+  align-items:flex-start}
+.p-col{display:flex;flex-direction:row-reverse;align-items:flex-start;flex:0 0 auto}
+.p-col > .cat{display:flex;flex-direction:column;align-items:center;
+  flex:0 0 auto;white-space:nowrap}
+.p-col > .cat > div{line-height:1;white-space:pre}
+.p-col > .dishes{display:flex;flex-direction:row-reverse;
+  align-items:flex-start;gap:0;flex:0 0 auto}
+.p-col > .dishes > .p-col-sub{display:flex;flex-direction:column;
+  gap:0;flex:0 0 auto;position:relative}
+.p-col .dish{display:flex;flex-direction:column;align-items:center;
+  flex:0 0 auto;white-space:nowrap;position:relative}
+.p-col .dish > div{line-height:1;white-space:pre}
+
+@media print{
+  @page{size:A4 landscape;margin:0}
+  html,body{margin:0!important;padding:0!important;background:#fff!important}
+  .topbar,.preview-bar,.hint,.mask,#gate,.preview-banner{display:none!important}
+  main{padding:0!important;max-width:none!important}
+  .view{display:none!important}
+  #view-preview{display:block!important}
+  #paperStage{position:static!important;height:auto!important;
+    overflow:visible!important;padding:0!important}
+  #paperScaler{position:static!important;transform:none!important;
+    width:auto!important;height:auto!important}
+  #paper{box-shadow:none!important;border-radius:0!important;margin:0!important}
+}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <h1>🍽 宴席排菜单</h1>
+  <div class="sub">请选择进入方式</div>
+  <div class="gate-btns">
+    <button id="gateFront"><span class="icon">📋</span><span>前台 · 点菜</span></button>
+    <button id="gateAdmin"><span class="icon">⚙️</span><span>后台 · 设置</span></button>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="brand">🍽 宴席排菜单</div>
+  <nav class="tabs">
+    <button data-view="front" class="active">前台 · 点菜</button>
+    <button data-view="admin">后台 · 设置</button>
+    <button data-view="preview">预览 · 打印</button>
+    <button id="btnCheckUpdate" title="检查更新">🔄</button>
+    <button id="btnExit" title="退出到选择页">⏻ 退出</button>
+    <span class="save-hint" id="saveHint">已自动保存</span>
+  </nav>
+</div>
+
+<main>
+  <section id="view-front" class="view">
+    <div class="front-grid">
+      <div class="card" style="margin-bottom:0">
+        <h3>已选菜品</h3>
+        <div id="pickedList" class="picked-list"></div>
+        <div class="empty" id="pickedEmpty">还没有选菜</div>
+        <div class="row-btns" style="margin-top:10px">
+          <button class="btn" id="btnUndo" disabled>↩ 撤销</button>
+          <button class="btn" id="btnClearPicked">清空已选</button>
+        </div>
+        <div class="row-btns" style="margin-top:6px">
+          <span class="hint" style="align-self:center;margin-right:4px">全部颜色：</span>
+          <button class="btn tiny" id="btnAllRed" style="color:#e60012;border-color:#e60012">● 红</button>
+          <button class="btn tiny" id="btnAllBlack" style="color:#2b2b2b">● 黑</button>
+          <button class="btn tiny" id="btnAllGold" style="color:#e6b422;border-color:#e6b422">● 金</button>
+        </div>
+        <button class="btn primary block" id="goPreview" style="margin-top:10px">生成排菜单 →</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div class="right-top">
+          <div class="card" style="margin-bottom:0">
+            <h3>菜单信息</h3>
+            <label class="fld"><span>日期</span><input type="date" id="fDate"></label>
+            <label class="fld"><span>餐别</span>
+              <select id="fMeal">
+                <option value="早餐">早餐</option><option value="午餐">午餐</option>
+                <option value="晚餐">晚餐</option><option value="午市">午市</option>
+                <option value="晚市">晚市</option><option value="午宴">午宴</option>
+                <option value="晚宴" selected>晚宴</option><option value="其他">其他…</option>
+              </select>
+            </label>
+            <label class="fld" id="fMealOtherWrap" style="display:none"><span>其他餐别</span>
+              <input type="text" id="fMealOther" placeholder="自定义"></label>
+            <label class="fld"><span>客人信息</span>
+              <input type="text" id="fGuest" placeholder="如：吴先生"></label>
+            <label class="fld"><span>人数</span>
+              <input type="number" id="fPeople" min="1" step="1" placeholder="如：8"></label>
+            <label class="fld"><span>配菜人</span>
+              <input type="text" id="fChef" placeholder="如：路"></label>
+          </div>
+
+          <div class="card" style="margin-bottom:0">
+            <h3>服务费 / 统计</h3>
+            <label class="chk"><input type="checkbox" id="svcOn"><span>收取服务费</span></label>
+            <label class="fld"><span>比例 %</span>
+              <input type="number" id="svcRate" min="0" step="0.1" value="10"></label>
+            <label class="chk"><input type="checkbox" id="showPriceOn"><span>显示菜品价格</span></label>
+            <label class="chk"><input type="checkbox" id="showUnitOn"><span>价格带 ¥ 符号</span></label>
+            <div class="stat-card">
+              <div class="stat"><span>菜品数</span><b id="sCount">0</b></div>
+              <div class="stat"><span>小计</span><b id="sSub">¥0</b></div>
+              <div class="stat"><span>服务费</span><b id="sSvc">¥0</b></div>
+              <div class="stat"><span>总金额</span><b id="sTotal">¥0</b></div>
+              <div class="stat"><span>人均</span><b id="sPer">—</b></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:0">
+            <h3>💾 菜单存档</h3>
+            <label class="fld"><span>名称</span>
+              <input type="text" id="savedName" placeholder="如：婚宴A"></label>
+            <button class="btn primary block" id="btnSaveMenu" style="margin-top:6px">保存当前菜单</button>
+            <div class="saved-list" id="savedList"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:0">
+          <h3>点选菜品</h3>
+          <div class="cat-tabs" id="catTabs"></div>
+          <div id="libList" class="dish-lib"></div>
+          <div class="search-row">
+            <input id="libSearch" placeholder="搜索菜名…（在当前分类下）">
+          </div>
+          <div class="row-btns" style="margin-top:9px">
+            <button class="btn" id="btnTempDish">＋ 临时菜</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-admin" class="view">
+    <div class="admin-grid">
+      <div class="card full">
+        <h3>🍲 菜品库</h3>
+        <div class="dish-add">
+          <input id="newDishName" placeholder="菜名，例如：清蒸鲈鱼">
+          <input id="newDishPrice" type="number" placeholder="价格" step="0.01" style="width:100px">
+          <select id="newDishCat"></select>
+          <button class="btn" id="addDishBtn">＋ 添加菜品</button>
+          <button class="btn" id="btnBulkDel">🗑 批量删除</button>
+        </div>
+        <div class="cat-filter" id="adminCatFilter"></div>
+        <div class="bulk-bar" id="bulkBar">
+          <span id="bulkCount">已选 0 项</span>
+          <button class="btn primary tiny" id="bulkConfirm" style="display:none">✅ 确认删除</button>
+          <button class="btn tiny" id="bulkCancel">取消</button>
+        </div>
+        <div id="adminDishList" class="admin-dish-grid"></div>
+        <details style="margin-top:9px">
+          <summary>批量导入（每行：菜名,价格,分类）</summary>
+          <textarea id="bulkText" rows="5"
+            placeholder="白切鸡,68,冷菜&#10;清蒸鲈鱼,88,热菜&#10;红烧肉,58,热菜"></textarea>
+          <div class="row-btns">
+            <button class="btn tiny" id="bulkReplace">替换全部</button>
+            <button class="btn tiny" id="bulkAppend">追加导入</button>
+          </div>
+        </details>
+        <div class="row-btns">
+          <button class="btn tiny" id="exportCfg">⬇ 导出全部配置</button>
+          <label class="btn tiny" style="display:inline-block">
+            ⬆ 导入配置<input type="file" id="importCfg" accept=".json" hidden>
+          </label>
+          <button class="btn tiny" id="resetCfg">恢复默认设置</button>
+        </div>
+        <div class="row-btns" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)">
+          <button class="btn primary" id="btnUploadCloud">⬆ 上传到云端</button>
+          <button class="btn" id="btnPreviewSample">👁 预览效果</button>
+          <button class="btn" id="btnChangePwd">🔑 修改后台密码</button>
+          <span class="hint" id="cloudStatus">云端：未连接</span>
+        </div>
+        <p class="hint" style="margin-top:6px">
+          所有改动会自动保存在本浏览器中。上传到云端后，其他设备点右上角 🔄 即可拉取。
+        </p>
+      </div>
+
+      <details class="card-fold">
+        <summary>📐 排版</summary>
+        <div class="fold-body">
+          <div class="two-col">
+            <label class="fld"><span>上边距 mm</span>
+              <input type="number" min="0" step="1" data-bind="layout.pagePadTop"></label>
+            <label class="fld"><span>下边距 mm</span>
+              <input type="number" min="0" step="1" data-bind="layout.pagePadBottom"></label>
+            <label class="fld"><span>类目名距顶部 cm</span>
+              <input type="number" min="0" step="0.1" data-bind="layout.catTop"></label>
+            <label class="fld"><span>信息栏距底部 mm</span>
+              <input type="number" min="0" step="1" data-bind="layout.infoBottom"></label>
+            <label class="fld"><span>列间距 mm</span>
+              <input type="number" step="0.1" data-bind="layout.colGap"></label>
+            <label class="fld"><span>行间距 mm</span>
+              <input type="number" step="0.1" data-bind="layout.rowGap"></label>
+            <label class="fld"><span>菜名距类目底端 mm</span>
+              <input type="number" min="0" step="0.5" data-bind="layout.nameOffsetTop"></label>
+            <label class="fld"><span>菜名距类目左边 mm</span>
+              <input type="number" min="0" step="0.5" data-bind="layout.catNameGap"></label>
+            <label class="fld"><span>类目名下方留白 mm</span>
+              <input type="number" min="0" step="0.5" data-bind="layout.catGap"></label>
+            <label class="fld"><span>信息栏项间距 mm</span>
+              <input type="number" min="0" step="0.5" data-bind="layout.infoGap"></label>
+            <label class="fld"><span>信息栏距右边 mm</span>
+              <input type="number" min="0" step="1" data-bind="layout.infoRight"></label>
+            <label class="fld"><span>信息栏到类目 cm</span>
+              <input type="number" min="0" step="0.1" data-bind="layout.infoToFirst"></label>
+            <label class="fld"><span>冷菜分列阈值</span>
+              <input type="number" min="2" max="30" step="1" data-bind="layout.splitAt"></label>
+          </div>
+          <details class="advanced">
+            <summary>高级参数（间距微调）</summary>
+            <div class="two-col">
+              <label class="fld"><span>冷菜两菜间距（字号倍）</span>
+                <input type="number" min="0" step="0.1" data-bind="layout.coldPairGap"></label>
+              <label class="fld"><span>冷菜"位"距菜名（字号倍）</span>
+                <input type="number" min="0" step="0.1" data-bind="layout.coldWeiGap"></label>
+              <label class="fld"><span>热菜"位"距菜名（字号倍）</span>
+                <input type="number" min="0" step="0.1" data-bind="layout.hotWeiGap"></label>
+              <label class="fld"><span>冷菜份数距菜名（字号倍）</span>
+                <input type="number" min="0" step="0.1" data-bind="layout.coldQtyGap"></label>
+              <label class="fld"><span>热菜份数距菜名（字号倍）</span>
+                <input type="number" min="0" step="0.1" data-bind="layout.hotQtyGap"></label>
+              <label class="chk"><input type="checkbox" data-bind="layout.allowOverlap">
+                <span>允许负间距重叠</span></label>
+            </div>
+          </details>
+        </div>
+      </details>
+
+      <details class="card-fold">
+        <summary>🔤 字体</summary>
+        <div class="fold-body">
+          <div class="two-col">
+            <label class="fld" style="grid-column:1/-1"><span>前台界面字体</span>
+              <select data-bind="layout.uiFont">
+                <option value='-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'>系统默认</option>
+                <option value='"Microsoft YaHei","PingFang SC",sans-serif'>微软雅黑</option>
+                <option value='"LXGW Wen Kai","KaiTi","STKaiti",serif'>霞鹜文楷（内置）</option>
+                <option value='"STSong","SimSun","宋体",serif'>宋体</option>
+                <option value='"Source Han Sans CN","Noto Sans SC",sans-serif'>思源黑体</option>
+                <option value='"Source Han Serif CN","Noto Serif SC",serif'>思源宋体</option>
+                <option value='"STXingkai","Xingkai SC","华文行楷",cursive'>华文行楷</option>
+                <option value='"STLiti","LiSu","隶书",serif'>隶书</option>
+              </select>
+            </label>
+            <label class="fld"><span>类目名字体</span>
+              <select data-bind="layout.catFont">
+                <option value='"LXGW Wen Kai","KaiTi","STKaiti",serif'>霞鹜文楷（内置）</option>
+                <option value='"STSong","SimSun","宋体",serif'>宋体</option>
+                <option value='"Microsoft YaHei","PingFang SC",sans-serif'>微软雅黑</option>
+                <option value='"Source Han Sans CN","Noto Sans SC",sans-serif'>思源黑体</option>
+                <option value='"Source Han Serif CN","Noto Serif SC",serif'>思源宋体</option>
+                <option value='"STXingkai","Xingkai SC","华文行楷",cursive'>华文行楷</option>
+                <option value='"STLiti","LiSu","隶书",serif'>隶书</option>
+              </select>
+            </label>
+            <label class="fld"><span>菜名字体</span>
+              <select data-bind="layout.nameFont">
+                <option value='"LXGW Wen Kai","KaiTi","STKaiti",serif'>霞鹜文楷（内置）</option>
+                <option value='"STSong","SimSun","宋体",serif'>宋体</option>
+                <option value='"Microsoft YaHei","PingFang SC",sans-serif'>微软雅黑</option>
+                <option value='"Source Han Sans CN","Noto Sans SC",sans-serif'>思源黑体</option>
+                <option value='"Source Han Serif CN","Noto Serif SC",serif'>思源宋体</option>
+                <option value='"STXingkai","Xingkai SC","华文行楷",cursive'>华文行楷</option>
+                <option value='"STLiti","LiSu","隶书",serif'>隶书</option>
+              </select>
+            </label>
+            <label class="fld"><span>信息字体</span>
+              <select data-bind="layout.infoFont">
+                <option value='"LXGW Wen Kai","KaiTi","STKaiti",serif'>霞鹜文楷（内置）</option>
+                <option value='"STSong","SimSun","宋体",serif'>宋体</option>
+                <option value='"Microsoft YaHei","PingFang SC",sans-serif'>微软雅黑</option>
+                <option value='"Source Han Sans CN","Noto Sans SC",sans-serif'>思源黑体</option>
+                <option value='"Source Han Serif CN","Noto Serif SC",serif'>思源宋体</option>
+                <option value='"STXingkai","Xingkai SC","华文行楷",cursive'>华文行楷</option>
+                <option value='"STLiti","LiSu","隶书",serif'>隶书</option>
+              </select>
+            </label>
+            <label class="fld"><span>信息字号</span>
+              <input type="number" min="4" max="200" step="0.5" data-bind="layout.infoSize"></label>
+            <label class="fld"><span>类目名字号</span>
+              <input type="number" min="4" max="200" step="0.5" data-bind="layout.catSize"></label>
+            <label class="fld"><span>菜名字号</span>
+              <input type="number" min="4" max="200" step="0.5" data-bind="layout.nameSize"></label>
+            <label class="fld"><span>金额字号</span>
+              <input type="number" min="4" max="200" step="0.5" data-bind="layout.priceSize"></label>
+            <label class="fld"><span>份数字号</span>
+              <input type="number" min="4" max="200" step="0.5" data-bind="layout.qtySize"></label>
+            <label class="fld"><span>类目名字距 em</span>
+              <input type="number" min="0" step="0.01" data-bind="layout.catSpacing"></label>
+            <label class="fld"><span>菜名字距 em</span>
+              <input type="number" min="0" step="0.01" data-bind="layout.nameSpacing"></label>
+            <label class="fld"><span>信息字距 em</span>
+              <input type="number" min="0" step="0.01" data-bind="layout.infoSpacing"></label>
+            <label class="fld"><span>日期字距 em</span>
+              <input type="number" min="0" step="0.01" data-bind="layout.dateSpacing"></label>
+            <label class="fld"><span>类目名颜色</span><input type="color" data-bind="layout.catColor"></label>
+            <label class="fld"><span>菜名颜色</span><input type="color" data-bind="layout.nameColor"></label>
+            <label class="fld"><span>金额颜色</span><input type="color" data-bind="layout.priceColor"></label>
+            <label class="fld"><span>信息颜色</span><input type="color" data-bind="layout.infoColor"></label>
+            <label class="chk"><input type="checkbox" data-bind="layout.boldCat"><span>类目名加粗</span></label>
+            <label class="chk"><input type="checkbox" data-bind="layout.boldName"><span>菜名加粗</span></label>
+            <label class="chk"><input type="checkbox" data-bind="layout.boldInfo"><span>信息加粗</span></label>
+          </div>
+        </div>
+      </details>
+
+      <div class="card">
+        <h3>🖼 背景</h3>
+        <label class="fld"><span>背景类型</span>
+          <select data-bind="bg.type">
+            <option value="color">纯色</option><option value="image">图片</option>
+          </select>
+        </label>
+        <label class="fld"><span>背景色</span><input type="color" data-bind="bg.color"></label>
+        <div class="swatches" id="bgSwatches"></div>
+        <label class="fld"><span>上传背景图</span>
+          <input type="file" id="aBgFile" accept="image/*" style="max-width:170px"></label>
+        <label class="fld"><span>图片填充</span>
+          <select data-bind="bg.fit">
+            <option value="cover">铺满（裁切）</option>
+            <option value="contain">完整显示</option>
+            <option value="100% 100%">拉伸铺满</option>
+          </select>
+        </label>
+        <label class="fld"><span>白色遮罩</span>
+          <input type="range" min="0" max="100" step="1" data-bind="bg.overlay">
+          <em id="overlayV">0%</em>
+        </label>
+        <button class="btn tiny" id="btnClearBg">清除背景图</button>
+      </div>
+
+      <div class="card">
+        <h3>👁 显示项</h3>
+        <label class="chk"><input type="checkbox" data-bind="layout.showQty"><span>显示份数</span></label>
+        <label class="chk"><input type="checkbox" data-bind="layout.showInfo"><span>显示右侧信息栏</span></label>
+        <label class="chk"><input type="checkbox" data-bind="layout.infoBox"><span>信息栏加边框</span></label>
+        <label class="fld"><span>信息栏边框内边距 mm</span>
+          <input type="number" min="0" step="0.5" data-bind="layout.infoBoxPad"></label>
+        <label class="chk"><input type="checkbox" data-bind="layout.autoFit"><span>自动缩字号（排不下时）</span></label>
+      </div>
+
+      <div class="card full">
+        <h3>💾 版式模板</h3>
+        <div class="row-btns">
+          <input id="tplName" placeholder="模板名称，如：婚宴" style="padding:6px 10px;
+            border:1px solid var(--line);border-radius:7px;font-size:12.5px;height:28px">
+          <button class="btn" id="tplSave">保存当前为版式模板</button>
+        </div>
+        <div id="tplList" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-preview" class="view">
+    <div id="previewBanner" class="preview-banner" style="display:none">
+      <span id="previewBannerText">预览中（示例）</span>
+      <button class="btn tiny" id="btnBackToAdmin">← 返回后台</button>
+    </div>
+    <div class="preview-bar">
+      <button class="btn primary" id="btnPrint">🖨 打印</button>
+      <button class="btn" id="btnExportPng">🖼 导出 PNG</button>
+      <button class="btn" id="btnShare">📤 分享</button>
+      <span class="hint">打印请选「A4 · 横向 · 边距：无 · 勾选背景图形」</span>
+    </div>
+    <div id="paperStage">
+      <div id="paperScaler">
+        <div id="paper">
+          <div class="p-overlay"></div>
+          <div class="p-content">
+            <div class="p-cols"></div>
+            <div class="p-info"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="mask" id="mask"><div class="box" id="maskBox"></div></div>
+
+<script>
+(function(){
+'use strict';
+
+const SUPABASE_URL = 'https://ykqpmhbpgqksvbnxcctk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Wntf6NBFhTivQMCvGVnJ_w_9XH3Li_z';
+const SUPABASE_TABLE = 'menu_versions';
+
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => { const v = Math.round((+n || 0) * 100) / 100;
+  return v.toFixed(2).replace(/\.?0+$/, '') || '0'; };
+const uid = () => Math.random().toString(36).slice(2, 9);
+const clone = o => JSON.parse(JSON.stringify(o));
+const todayStr = () => { const d = new Date(), p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+const getPath = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
+const setPath = (o, p, v) => { const ks = p.split('.'), last = ks.pop();
+  ks.reduce((a, k) => (a[k] = a[k] || {}), o)[last] = v; };
+const PT2MM = 0.3527777778;
+const zhCollator = new Intl.Collator('zh-Hans-u-co-pinyin');
+
+function dateCN(s){
+  if(!s) return '';
+  const m = String(s).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(!m) return s;
+  return parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日';
+}
+function fastHash(o){
+  const s = JSON.stringify(o || null);
+  let h = 5381;
+  for(let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return h;
+}
+
+const LS_KEY = 'banquet_menu';
+const LS_TPL = 'banquet_menu_tpl';
+const LS_LEGACY_KEYS = ['banquet_menu_v32'];
+const LS_TPL_LEGACY_KEYS = ['banquet_menu_tpl_v32'];
+const LS_SAVED = 'banquet_menu_saved_v1';
+const LS_SAVED_CACHE = 'banquet_menu_saved_cache_v1';
+const LS_ADMIN_PWD = 'banquet_menu_admin_pwd';
+const LS_LOCAL_VER = 'banquet_menu_local_ver';
+const CATS = ['餐前','冷菜','汤品','热菜','位菜','主食','点心','甜品','酒水','餐后'];
+const CATS_PRINT = ['餐前','冷菜','汤品','热菜','主食','点心','甜品','酒水','餐后'];
+function printCatOf(cat){ return (cat === '位菜') ? '热菜' : cat; }
+const DEFAULT_UI_FONT = '-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+const KAI_FONT = '"LXGW Wen Kai","KaiTi","STKaiti",serif';
+
+function defaultDishes(){
+  return [
+    ['白切鸡',68,'冷菜'],['清蒸鲈鱼',88,'热菜'],['红烧肉',58,'热菜'],
+    ['油焖大虾',98,'热菜'],['糖醋排骨',58,'热菜'],['蒜蓉扇贝',68,'热菜'],
+    ['干锅牛蛙',78,'热菜'],['上汤娃娃菜',28,'热菜'],['清炒时蔬',22,'热菜'],
+    ['老鸭汤',68,'汤品'],['扬州炒饭',28,'主食'],['水果拼盘',38,'餐后']
+  ].map(x => ({ id: uid(), name: x[0], price: x[1], cat: x[2], hits: 0 }));
+}
+
+const DEFAULTS = {
+  bg:{ type:'color', color:'#fffdf6', image:'', fit:'cover', overlay:0 },
+  layout:{
+    pagePadTop:8, pagePadBottom:8,
+    catTop:7, colGap:6, rowGap:2,
+    nameOffsetTop:0, catNameGap:2, catGap:8,
+    infoRight:8, infoBottom:30, infoGap:4, infoToFirst:1.5, splitAt:6,
+    coldPairGap:2, coldWeiGap:1.5, hotWeiGap:8, coldQtyGap:1.5, hotQtyGap:8,
+    allowOverlap:false,
+    uiFont: DEFAULT_UI_FONT,
+    catFont: KAI_FONT, nameFont: KAI_FONT, infoFont: KAI_FONT,
+    catSize:18, nameSize:14, priceSize:14, qtySize:14, infoSize:22,
+    catSpacing:0.3, nameSpacing:0.15, infoSpacing:0.15, dateSpacing:0.35,
+    boldCat:true, boldName:false, boldInfo:false,
+    catColor:'#1a1a1a', nameColor:'#2b2b2b',
+    priceColor:'#8c1c1c', infoColor:'#1a1a1a',
+    showPrice:false, showQty:true, showUnit:false, showInfo:true,
+    infoBox:false, infoBoxPad:2, autoFit:true
+  },
+  dishes: defaultDishes(),
+  front:{
+    date:'', meal:'晚宴', mealOther:'', guest:'', people:'', chef:'',
+    picked:[], svcOn:false, svcRate:10, activeCat:'', colorOverride:''
+  }
+};
+
+function load(){
+  try{
+    let raw = localStorage.getItem(LS_KEY);
+    if(!raw){
+      for(const k of LS_LEGACY_KEYS){
+        const legacy = localStorage.getItem(k);
+        if(legacy){ raw = legacy; try{ localStorage.setItem(LS_KEY, legacy); }catch(e){} break; }
+      }
+    }
+    if(!raw) return clone(DEFAULTS);
+    const o = JSON.parse(raw), b = clone(DEFAULTS);
+    return {
+      bg:     Object.assign(b.bg,     o.bg     || {}),
+      layout: Object.assign(b.layout, o.layout || {}),
+      dishes: Array.isArray(o.dishes) ? o.dishes.map(d => ({
+        id: d.id || uid(), name: d.name || '', price: +d.price || 0,
+        cat: CATS.includes(d.cat) ? d.cat : '热菜', hits: +d.hits || 0
+      })) : b.dishes,
+      front:  Object.assign(b.front,  o.front  || {})
+    };
+  }catch(e){ return clone(DEFAULTS); }
+}
+let S = load();
+if(!S.front.activeCat || !CATS.includes(S.front.activeCat)){
+  S.front.activeCat = CATS.find(c => S.dishes.some(d => d.cat === c)) || CATS[0];
+}
+function applyUiFont(){
+  document.documentElement.style.setProperty('--ui-font',
+    S.layout.uiFont || DEFAULT_UI_FONT);
+}
+
+let _saveTimer = null, _saveDebounce = null;
+function showSaved(){
+  const el = $('#saveHint');
+  if(!el) return;
+  el.textContent = '✓ 已自动保存';
+  el.classList.add('flash');
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    el.classList.remove('flash');
+    el.textContent = '已自动保存';
+  }, 1200);
+}
+function save(){
+  clearTimeout(_saveDebounce);
+  _saveDebounce = setTimeout(() => {
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); showSaved(); }
+    catch(e){ alert('保存失败：本地存储空间不足（通常是背景图太大）。'); }
+  }, 300);
+}
+function saveNow(){
+  clearTimeout(_saveDebounce);
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); showSaved(); }catch(e){}
+}
+window.addEventListener('beforeunload', saveNow);
+
+function showMask(html){
+  $('#maskBox').innerHTML = html;
+  $('#mask').classList.add('show');
+}
+function hideMask(){
+  $('#mask').classList.remove('show');
+  $('#maskBox').innerHTML = '';
+}
+function toast(msg, duration){
+  const old = document.getElementById('__toast');
+  if(old) old.remove();
+  const el = document.createElement('div');
+  el.id = '__toast';
+  el.textContent = msg;
+  el.style.cssText = [
+    'position:fixed','left:50%','top:50%','transform:translate(-50%,-50%)',
+    'background:rgba(0,0,0,.82)','color:#fff','padding:14px 22px',
+    'border-radius:10px','font-size:15px','z-index:2000',
+    'max-width:80vw','text-align:center','line-height:1.5',
+    'box-shadow:0 8px 30px rgba(0,0,0,.3)','pointer-events:none',
+    'white-space:pre-wrap'
+  ].join(';');
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity .3s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 300);
+  }, duration || 1500);
+}
+function askPassword(title){
+  return new Promise(resolve => {
+    showMask(
+      '<h3>' + esc(title) + '</h3>' +
+      '<input type="password" id="__pwd" placeholder="密码" autocomplete="current-password">' +
+      '<div class="row-btns">' +
+      '<button class="btn" id="__cancel">取消</button>' +
+      '<button class="btn primary" id="__ok">确定</button></div>'
+    );
+    const input = $('#__pwd');
+    setTimeout(() => input.focus(), 50);
+    function done(v){ hideMask(); resolve(v); }
+    $('#__ok').onclick = () => done(input.value);
+    $('#__cancel').onclick = () => done(null);
+    input.onkeydown = e => {
+      if(e.key === 'Enter') done(input.value);
+      if(e.key === 'Escape') done(null);
+    };
+  });
+}
+function askSelect(title, options){
+  return new Promise(resolve => {
+    const opts = options.map(o =>
+      '<option value="' + esc(o.value) + '">' + esc(o.label) + '</option>').join('');
+    showMask(
+      '<h3>' + esc(title) + '</h3>' +
+      '<select id="__sel">' + opts + '</select>' +
+      '<div class="row-btns">' +
+      '<button class="btn" id="__cancel">取消</button>' +
+      '<button class="btn primary" id="__ok">确定</button></div>'
+    );
+    const sel = $('#__sel');
+    function done(v){ hideMask(); resolve(v); }
+    $('#__ok').onclick = () => done(sel.value);
+    $('#__cancel').onclick = () => done(null);
+  });
+}
+
+function getAdminPwd(){ return localStorage.getItem(LS_ADMIN_PWD) || ''; }
+function setAdminPwd(p){ localStorage.setItem(LS_ADMIN_PWD, p); }
+async function tryEnterAdmin(){
+  const existing = getAdminPwd();
+  if(!existing){
+    const p1 = await askPassword('首次使用，请设置后台密码');
+    if(p1 == null) return false;
+    if(!p1){ alert('密码不能为空'); return false; }
+    const p2 = await askPassword('请再次输入以确认');
+    if(p2 == null) return false;
+    if(p1 !== p2){ alert('两次输入不一致'); return false; }
+    setAdminPwd(p1); toast('✅ 后台密码已设置'); return true;
+  }
+  const pwd = await askPassword('请输入后台密码');
+  if(pwd == null) return false;
+  if(pwd !== existing){ alert('密码错误'); return false; }
+  return true;
+}
+
+async function sbFetch(path, options){
+  const url = SUPABASE_URL + '/rest/v1/' + path;
+  const headers = {
+    'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json', ...(options && options.headers || {})
+  };
+  const res = await fetch(url, { ...(options || {}), headers });
+  const txt = await res.text();
+  if(!res.ok) throw new Error('云端请求失败 (' + res.status + ')：' + txt);
+  if(!txt) return null;
+  try{ return JSON.parse(txt); }catch(e){ return null; }
+}
+function getLocalVersion(){ return parseInt(localStorage.getItem(LS_LOCAL_VER) || '0', 10) || 0; }
+function setLocalVersion(v){ localStorage.setItem(LS_LOCAL_VER, String(v)); }
+async function fetchCloudVersion(){
+  const rows = await sbFetch(SUPABASE_TABLE + '?select=version,updated_at,data&id=eq.1', { method:'GET' });
+  return (rows && rows[0]) ? rows[0] : null;
+}
+async function uploadToCloud(){
+  let cloud;
+  try{ cloud = await fetchCloudVersion(); }
+  catch(err){ alert('无法连接云端：' + err.message); return; }
+  const payload = { dishes:S.dishes, layout:S.layout, bg:S.bg, _uploadedAt: Date.now() };
+  const newVersion = ((cloud && cloud.version) || 0) + 1;
+  const record = { id:1, version:newVersion, updated_at:new Date().toISOString(), data:payload };
+  try{
+    await sbFetch(SUPABASE_TABLE, {
+      method:'POST',
+      headers:{ 'Prefer':'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(record)
+    });
+    setLocalVersion(newVersion);
+    updateCloudStatus();
+    toast('✅ 上传成功！\n云端版本：v' + newVersion);
+  }catch(err){ alert('上传失败：' + err.message); }
+}
+async function pullFromCloud(interactive){
+  let cloud;
+  try{ cloud = await fetchCloudVersion(); }
+  catch(err){ if(interactive) alert('无法连接云端：' + err.message); return; }
+  if(!cloud){ if(interactive) alert('云端还没有数据，请先由管理员上传。'); return; }
+  if(interactive){
+    const cd = cloud.data || {};
+    const sameDishes = fastHash(cd.dishes) === fastHash(S.dishes);
+    const sameLayout = fastHash(cd.layout) === fastHash(S.layout);
+    const sameBg     = fastHash(cd.bg)     === fastHash(S.bg);
+    if(sameDishes && sameLayout && sameBg){
+      alert('本地和云端数据一致，无需更新。'); return;
+    }
+    if(!confirm('发现云端数据和本地不一致，是否用云端覆盖本地？\n\n' +
+      '云端版本：v' + cloud.version + '\n会覆盖本地的菜品库、排版、背景。\n' +
+      '（不影响已选菜品）')) return;
+  }
+  const d = cloud.data || {};
+  if(Array.isArray(d.dishes)){
+    S.dishes = d.dishes.map(x => ({
+      id: x.id || uid(), name: x.name || '', price: +x.price || 0,
+      cat: CATS.includes(x.cat) ? x.cat : '热菜', hits: +x.hits || 0
+    }));
+  }
+  if(d.layout) S.layout = Object.assign(clone(DEFAULTS.layout), d.layout);
+  if(d.bg)     S.bg     = Object.assign(clone(DEFAULTS.bg),     d.bg);
+  setLocalVersion(cloud.version);
+  applyUiFont(); save();
+  syncAdminInputs(); renderAdminDishes(); renderFront(); renderPaperSoon();
+  updateCloudStatus();
+  if(interactive) toast('✅ 已更新到 v' + cloud.version);
+}
+async function updateCloudStatus(){
+  const el = $('#cloudStatus');
+  if(!el) return;
+  try{
+    const cloud = await fetchCloudVersion();
+    if(!cloud){ el.textContent = '云端：暂无数据'; el.style.color = ''; }
+    else{
+      const lv = getLocalVersion(), cv = cloud.version;
+      if(cv > lv){ el.textContent = '云端：v' + cv + '（本地 v' + lv + '，有新版）'; el.style.color = '#e67e22'; }
+      else{ el.textContent = '云端：v' + cv + '（已是最新）'; el.style.color = '#4caf50'; }
+    }
+  }catch(e){ el.textContent = '云端：连接失败'; el.style.color = '#e74c3c'; }
+}
+async function autoCheckUpdate(){
+  try{
+    const cloud = await fetchCloudVersion();
+    if(!cloud) return;
+    if(cloud.version > getLocalVersion()){
+      const btn = $('#btnCheckUpdate');
+      btn.classList.add('hasNew');
+      btn.title = '有新版 v' + cloud.version + '，点击更新';
+    }
+  }catch(e){}
+}
+
+let UNDO = [];
+function pushUndo(){
+  const bgNoImage = Object.assign({}, S.bg, { image: '' });
+  UNDO.push(JSON.stringify({ dishes:S.dishes, front:S.front, layout:S.layout, bg:bgNoImage }));
+  if(UNDO.length > 50) UNDO.shift();
+  $('#btnUndo').disabled = false;
+}
+function doUndo(){
+  if(!UNDO.length){ alert('没有可撤销的操作'); return; }
+  const snap = JSON.parse(UNDO.pop());
+  S.dishes = snap.dishes; S.front = snap.front; S.layout = snap.layout;
+  const curImage = S.bg.image;
+  S.bg = Object.assign({}, snap.bg, { image: curImage });
+  applyUiFont();
+  save(); syncAdminInputs(); renderAdminDishes(); renderFront(); renderPaperSoon();
+  updateAllColorButtons();
+  if(!UNDO.length) $('#btnUndo').disabled = true;
+}
+
+let _adminUnlocked = false;
+let _currentRole = null;
+let _previewOverride = null;
+
+function showGate(){
+  $('#gate').classList.remove('hide');
+  $('.topbar').style.display = 'none';
+  $$('.view').forEach(v => v.classList.remove('active'));
+  _currentRole = null; _previewOverride = null;
+  hidePreviewBanner();
+}
+function hideGate(){
+  $('#gate').classList.add('hide');
+  $('.topbar').style.display = '';
+}
+async function enterRole(role){
+  if(role === 'admin'){
+    if(!_adminUnlocked){
+      const ok = await tryEnterAdmin();
+      if(!ok) return;
+      _adminUnlocked = true;
+    }
+  }
+  _currentRole = role;
+  hideGate();
+  updateTabsVisibility();
+  switchView(role === 'front' ? 'front' : 'admin');
+}
+function updateTabsVisibility(){
+  const isFront = (_currentRole === 'front');
+  const isAdmin = (_currentRole === 'admin');
+  $$('.tabs button[data-view]').forEach(b => {
+    const v = b.dataset.view;
+    if(v === 'front' || v === 'preview') b.style.display = isFront ? '' : 'none';
+    if(v === 'admin') b.style.display = isAdmin ? '' : 'none';
+  });
+}
+function switchView(name){
+  if(_currentRole === 'front' && name === 'admin') return;
+  if(_currentRole === 'admin' && name === 'front') return;
+  if(name !== 'preview') hidePreviewBanner();
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  $$('.tabs button[data-view]').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === name));
+  if(name === 'preview'){ renderPaper(); requestAnimationFrame(fitPaper); }
+  if(name === 'front') renderFront();
+  if(name === 'admin'){ syncAdminInputs(); renderAdminDishes(); renderTplList(); renderSavedList(); updateCloudStatus(); }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function fitPaper(){
+  const stage = $('#paperStage'), scaler = $('#paperScaler'), paper = $('#paper');
+  if(!stage || !paper) return;
+  const pw = paper.offsetWidth, ph = paper.offsetHeight;
+  if(!pw) return;
+  const avail = stage.clientWidth || pw;
+  const scale = Math.min(1, avail / pw);
+  scaler.style.width = pw + 'px';
+  scaler.style.height = ph + 'px';
+  scaler.style.transformOrigin = 'top left';
+  const left = Math.max(0, (avail - pw * scale) / 2);
+  scaler.style.transform = 'translateX(' + left + 'px) scale(' + scale + ')';
+  stage.style.height = (ph * scale + 12) + 'px';
+}
+
+function makeVBlock(chars, font, size, color, bold, spacing, marginTopMM){
+  const box = document.createElement('div');
+  box.style.display = 'flex';
+  box.style.flexDirection = 'column';
+  box.style.alignItems = 'center';
+  box.style.fontFamily = font;
+  box.style.fontSize = size + 'pt';
+  box.style.color = color;
+  box.style.fontWeight = bold ? '700' : '400';
+  if(marginTopMM) box.style.marginTop = marginTopMM + 'mm';
+  chars.forEach((ch, i) => {
+    const c = document.createElement('div');
+    c.textContent = ch;
+    c.style.lineHeight = '1';
+    c.style.whiteSpace = 'pre';
+    if(i < chars.length - 1 && spacing > 0){
+      c.style.marginBottom = (spacing * size * PT2MM) + 'mm';
+    }
+    box.appendChild(c);
+  });
+  return box;
+}
+
+function dishParts(d, L, peopleNum, isCold){
+  const qty = +d.qty || 1;
+  const price = +d.price || 0;
+  const showQty = L.showQty && qty !== 1;
+  const showPrice = L.showPrice && price > 0;
+  let qtyText = null, gapRatio = 0;
+  if(showQty){
+    qtyText = (peopleNum > 1 && qty === peopleNum) ? '位' : String(qty);
+    if(qtyText === '位'){
+      gapRatio = isCold
+        ? (L.coldWeiGap != null ? L.coldWeiGap : 1.5)
+        : (L.hotWeiGap != null ? L.hotWeiGap : 8);
+    }else{
+      gapRatio = isCold
+        ? (L.coldQtyGap != null ? L.coldQtyGap : 1.5)
+        : (L.hotQtyGap != null ? L.hotQtyGap : 8);
+    }
+  }
+  return { name: d.name, qtyText, showQty, showPrice, price, gapRatio };
+}
+function dishShowsWei(d, L, peopleNum){
+  const qty = +d.qty || 1;
+  return !!(L.showQty && qty !== 1 && peopleNum > 1 && qty === peopleNum);
+}
+function dishCharCount(d, L, peopleNum, isCold){
+  const p = dishParts(d, L, peopleNum, isCold);
+  let n = (p.name.length || 1);
+  if(p.showQty){
+    n += p.gapRatio;
+    if(p.qtyText !== '位') n += String(p.qtyText).length;
+  }
+  if(p.showPrice){
+    if(p.showQty) n += 1;
+    n += String(fmt(p.price)).length + (L.showUnit ? 1 : 0);
+  }
+  return n;
+}
+function pickNameColor(d, L, globalColor){ return d.color || globalColor || L.nameColor; }
+function pickMetaColor(d, L, globalColor){ return d.color || globalColor || L.priceColor; }
+
+function makeDishEl(d, L, fitSize, peopleNum, isCold, globalColor){
+  const p = dishParts(d, L, peopleNum, isCold);
+  const row = document.createElement('div');
+  row.className = 'dish';
+  const nameColor = pickNameColor(d, L, globalColor);
+  const metaColor = pickMetaColor(d, L, globalColor);
+  row.appendChild(makeVBlock(
+    String(p.name).split(''), L.nameFont, fitSize, nameColor, L.boldName, L.nameSpacing, 0));
+  if(p.showQty){
+    const qtySize = (L.qtySize != null ? L.qtySize : fitSize);
+    const gapMM = p.gapRatio * fitSize * PT2MM;
+    row.appendChild(makeVBlock(
+      String(p.qtyText).split(''), L.nameFont, qtySize, metaColor, false, L.nameSpacing, gapMM));
+  }
+  if(p.showPrice){
+    const priceSize = (L.priceSize != null ? L.priceSize : fitSize);
+    if(p.showQty){
+      row.appendChild(makeVBlock(['*'], L.nameFont, priceSize, metaColor, false, 0, 0));
+    }
+    const priceTxt = (L.showUnit ? '¥' : '') + fmt(p.price);
+    row.appendChild(makeVBlock(
+      String(priceTxt).split(''), L.nameFont, priceSize, metaColor, false, L.nameSpacing, 0));
+  }
+  return row;
+}
+function makeAlignedDishEl(d, L, fitSize, peopleNum, isCold, alignLineRatio, globalColor){
+  const p = dishParts(d, L, peopleNum, isCold);
+  const row = document.createElement('div');
+  row.className = 'dish';
+  const nameColor = pickNameColor(d, L, globalColor);
+  const metaColor = pickMetaColor(d, L, globalColor);
+  row.appendChild(makeVBlock(
+    String(p.name).split(''), L.nameFont, fitSize, nameColor, L.boldName, L.nameSpacing, 0));
+  if(p.showQty && p.qtyText === '位'){
+    const spacingF = 1 + (L.nameSpacing || 0);
+    const nameChars = p.name.length;
+    const gapChars = Math.max(0, alignLineRatio - nameChars);
+    const gapMM = gapChars * fitSize * PT2MM * spacingF;
+    row.appendChild(makeVBlock(['位'], L.nameFont, fitSize, metaColor, false, L.nameSpacing, gapMM));
+    if(p.showPrice){
+      const priceSize = (L.priceSize != null ? L.priceSize : fitSize);
+      row.appendChild(makeVBlock(['*'], L.nameFont, priceSize, metaColor, false, 0, 0));
+      const priceTxt = (L.showUnit ? '¥' : '') + fmt(p.price);
+      row.appendChild(makeVBlock(
+        String(priceTxt).split(''), L.nameFont, priceSize, metaColor, false, L.nameSpacing, 0));
+    }
+  }else{
+    return makeDishEl(d, L, fitSize, peopleNum, isCold, globalColor);
+  }
+  return row;
+}
+
+let _paperRaf = 0;
+function renderPaperSoon(){
+  if(_paperRaf) return;
+  _paperRaf = requestAnimationFrame(() => {
+    _paperRaf = 0;
+    renderPaper();
+  });
+}
+
+function renderPaper(){
+  const L = S.layout, B = S.bg;
+  const F = _previewOverride ? _previewOverride.front : S.front;
+  const paper = $('#paper');
+  if(!paper) return;
+  const colorOverride = F.colorOverride || '';
+
+  if(B.type === 'image' && B.image){
+    paper.style.backgroundColor = B.color || '#fff';
+    paper.style.backgroundImage = 'url("' + B.image + '")';
+    paper.style.backgroundSize = B.fit || 'cover';
+    paper.style.backgroundPosition = 'center center';
+    paper.style.backgroundRepeat = 'no-repeat';
+  }else{
+    paper.style.backgroundColor = B.color || '#fff';
+    paper.style.backgroundImage = 'none';
+  }
+  paper.querySelector('.p-overlay').style.background =
+    'rgba(255,255,255,' + ((B.overlay || 0) / 100) + ')';
+
+  const groups = {};
+  CATS_PRINT.forEach(c => groups[c] = []);
+  F.picked.forEach(d => {
+    const rawCat = CATS.includes(d.cat) ? d.cat : '热菜';
+    const c = printCatOf(rawCat);
+    if(!groups[c]) groups[c] = [];
+    groups[c].push(d);
+  });
+
+  const peopleNum = parseInt(F.people, 10) || 0;
+
+  let alignBaseChars = 0;
+  CATS_PRINT.forEach(cat => {
+    const list = groups[cat];
+    if(!list.length) return;
+    const isCold = (cat === '冷菜');
+    const isCold2 = (isCold && list.length >= (L.splitAt || 6));
+    if(isCold2) return;
+    list.forEach(d => {
+      if(!dishShowsWei(d, L, peopleNum)) return;
+      const nameLen = Math.min(d.name.length, 6);
+      if(nameLen > alignBaseChars) alignBaseChars = nameLen;
+    });
+  });
+  const hotWeiGapVal = (L.hotWeiGap != null ? L.hotWeiGap : 8);
+  const alignLineRatio = alignBaseChars + hotWeiGapVal;
+
+  /* 信息栏 */
+  const info = paper.querySelector('.p-info');
+  info.innerHTML = '';
+  info.style.display = L.showInfo ? 'flex' : 'none';
+  info.style.right = L.infoRight + 'mm';
+  info.style.top = 'auto';
+  info.style.bottom = (L.infoBottom != null ? L.infoBottom : 30) + 'mm';
+  info.style.flexDirection = 'column';
+  info.style.alignItems = 'center';
+  info.style.gap = L.infoGap + 'mm';
+  info.style.flexWrap = 'nowrap';
+  info.style.border = 'none';
+  info.style.padding = '0';
+  if(L.showInfo){
+    if(L.infoBox){
+      info.style.border = '0.4mm solid ' + (colorOverride || L.infoColor);
+      info.style.padding = L.infoBoxPad + 'mm';
+    }
+    const meal = F.meal === '其他' ? (F.mealOther || '') : (F.meal || '');
+    const people = F.people ? F.people + '位' : '';
+    [
+      { txt: dateCN(F.date), spacing: L.dateSpacing },
+      { txt: meal,           spacing: L.infoSpacing },
+      { txt: F.guest || '',  spacing: L.infoSpacing },
+      { txt: people,         spacing: L.infoSpacing },
+      { txt: F.chef || '',   spacing: L.infoSpacing }
+    ].forEach(seg => {
+      if(!seg.txt) return;
+      const el = makeVBlock(
+        String(seg.txt).split(''), L.infoFont, L.infoSize,
+        colorOverride || L.infoColor,
+        L.boldInfo, seg.spacing, 0);
+      el.classList.add('seg-v');
+      info.appendChild(el);
+    });
+  }
+
+  /* 类目列 */
+  const cols = paper.querySelector('.p-cols');
+  cols.innerHTML = '';
+  cols.style.top = (L.catTop * 10) + 'mm';
+  cols.style.gap = L.colGap + 'mm';
+
+  let infoWidthMM = 0;
+  if(L.showInfo && info.offsetWidth) infoWidthMM = info.offsetWidth * 25.4 / 96;
+  cols.style.paddingRight = (L.infoRight + infoWidthMM + L.infoToFirst * 10) + 'mm';
+
+  const availMM = 210 - L.catTop * 10 - L.catSize * PT2MM * 1.6
+    - L.catGap - (L.pagePadBottom || 8);
+  const allowNeg = !!L.allowOverlap;
+
+  CATS_PRINT.forEach(cat => {
+    const list = groups[cat];
+    if(!list.length) return;
+    const isCold = (cat === '冷菜');
+    const isCold2 = (isCold && list.length >= (L.splitAt || 6));
+
+    const col = document.createElement('div');
+    col.className = 'p-col';
+
+    let subColumns = [];
+    if(isCold2){
+      const byLen = list.slice().sort((a, b) =>
+        (a.name.length - b.name.length) || a.name.localeCompare(b.name, 'zh'));
+      const topCount = Math.ceil(byLen.length / 2);
+      const top = byLen.slice(0, topCount);
+      const bottom = byLen.slice(topCount);
+      for(let i = 0; i < topCount; i++){
+        const pair = [top[i]];
+        if(bottom[i]) pair.push(bottom[i]);
+        subColumns.push(pair);
+      }
+    }else{
+      list.forEach(d => subColumns.push([d]));
+    }
+
+    let fitSize = L.nameSize;
+    if(L.autoFit !== false){
+      const spacingF = 1 + (L.nameSpacing || 0);
+      const innerGap = n => {
+        if(n <= 1) return 0;
+        let g = L.rowGap != null ? L.rowGap : 2;
+        if(!allowNeg) g = Math.max(0, g);
+        return g * (n - 1);
+      };
+      const need = sz => {
+        let m = 0;
+        subColumns.forEach(pair => {
+          const chars = pair.reduce((s, d) =>
+            s + dishCharCount(d, L, peopleNum, isCold), 0);
+          const v = chars * sz * PT2MM * spacingF + innerGap(pair.length);
+          if(v > m) m = v;
+        });
+        return m;
+      };
+      if(need(L.nameSize) > availMM){
+        let sz = L.nameSize, guard = 0;
+        while(need(sz) > availMM && sz > 4 && guard++ < 500){
+          sz = Math.max(4, +(sz - 0.5).toFixed(1));
+        }
+        fitSize = sz;
+      }
+    }
+
+    const dishesWrap = document.createElement('div');
+    dishesWrap.className = 'dishes';
+    let cg = L.colGap != null ? L.colGap : 6;
+    if(!allowNeg) cg = Math.max(0, cg);
+    dishesWrap.style.gap = cg + 'mm';
+
+    let coldTopMaxChars = 0, coldPairGapMM = 0;
+    if(isCold2){
+      subColumns.forEach(pair => {
+        if(pair.length >= 1){
+          const c = dishCharCount(pair[0], L, peopleNum, isCold);
+          if(c > coldTopMaxChars) coldTopMaxChars = c;
+        }
+      });
+      const ratio = L.coldPairGap != null ? L.coldPairGap : 2;
+      coldPairGapMM = ratio * fitSize * PT2MM;
+    }
+
+    const colAlign = !isCold2;
+
+    subColumns.forEach(pair => {
+      const sub = document.createElement('div');
+      sub.className = 'p-col-sub';
+      sub.style.display = 'flex';
+      sub.style.flexDirection = 'column';
+      sub.style.position = 'relative';
+
+      if(isCold2 && pair.length === 2){
+        const spacingF = 1 + (L.nameSpacing || 0);
+        const topSlotMM = coldTopMaxChars * fitSize * PT2MM * spacingF;
+        const topRow = document.createElement('div');
+        topRow.style.height = topSlotMM + 'mm';
+        topRow.style.display = 'flex';
+        topRow.style.alignItems = 'flex-start';
+        topRow.appendChild(makeDishEl(pair[0], L, fitSize, peopleNum, isCold, colorOverride));
+        sub.appendChild(topRow);
+        const bottomEl = makeDishEl(pair[1], L, fitSize, peopleNum, isCold, colorOverride);
+        bottomEl.style.marginTop = coldPairGapMM + 'mm';
+        sub.appendChild(bottomEl);
+      }else{
+        pair.forEach(d => {
+          const showWei = dishShowsWei(d, L, peopleNum);
+          if(colAlign && showWei){
+            sub.appendChild(makeAlignedDishEl(d, L, fitSize, peopleNum, isCold, alignLineRatio, colorOverride));
+          }else{
+            sub.appendChild(makeDishEl(d, L, fitSize, peopleNum, isCold, colorOverride));
+          }
+        });
+      }
+      dishesWrap.appendChild(sub);
+    });
+
+    const nameEl = makeVBlock(
+      String(cat).split(''), L.catFont, L.catSize,
+      colorOverride || L.catColor,
+      L.boldCat, L.catSpacing, 0);
+    nameEl.classList.add('cat');
+    nameEl.style.marginLeft = (L.catNameGap != null ? L.catNameGap : 2) + 'mm';
+    col.appendChild(nameEl);
+    col.appendChild(dishesWrap);
+    if(L.nameOffsetTop) dishesWrap.style.marginTop = L.nameOffsetTop + 'mm';
+    cols.appendChild(col);
+  });
+}
+
+function renderCatTabs(){
+  const box = $('#catTabs');
+  box.innerHTML = '';
+  CATS.forEach(c => {
+    if(!S.dishes.some(d => d.cat === c)) return;
+    const b = document.createElement('button');
+    b.textContent = c;
+    b.className = (c === S.front.activeCat) ? 'active' : '';
+    b.addEventListener('click', () => {
+      S.front.activeCat = c; save(); renderFront();
+    });
+    box.appendChild(b);
+  });
+}
+function renderFront(){
+  renderCatTabs();
+  const kw = ($('#libSearch').value || '').trim().toLowerCase();
+  const cat = S.front.activeCat;
+
+  const lib = $('#libList');
+  lib.innerHTML = '';
+  const list = S.dishes.filter(d =>
+    (!cat || d.cat === cat) && (!kw || d.name.toLowerCase().includes(kw)));
+  if(!list.length) lib.innerHTML = '<div class="empty">该分类下没有菜品</div>';
+  list.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'lib-item';
+    el.innerHTML = '<span>' + esc(d.name) + '</span>' +
+      '<span class="p">¥' + fmt(d.price) + '</span>';
+    el.addEventListener('click', () => addPick(d));
+    lib.appendChild(el);
+  });
+
+  const box = $('#pickedList');
+  box.innerHTML = '';
+  $('#pickedEmpty').style.display = S.front.picked.length ? 'none' : '';
+  const indexed = S.front.picked.map((it, i) => ({ it, i }));
+  indexed.sort((a, b) => {
+    const ca = CATS.indexOf(a.it.cat), cb = CATS.indexOf(b.it.cat);
+    if(ca !== cb) return ca - cb;
+    return zhCollator.compare(a.it.name, b.it.name);
+  });
+  indexed.forEach(({ it, i }) => {
+    const el = document.createElement('div');
+    el.className = 'picked-item';
+    el.draggable = true;
+    el.dataset.i = i;
+    el.innerHTML =
+      '<span class="grip">⠿</span>' +
+      '<span class="pi-name">' + esc(it.name) +
+        '<span class="pi-cat">' + esc(it.cat) + '</span>' +
+        (it.temp ? '<span class="pi-cat" style="color:#e67e22"> · 临时</span>' : '') +
+        '</span>' +
+      '<span class="pi-dots">' +
+        '<button class="pi-dot' + (it.color === '#e60012' ? ' active' : '') + '" ' +
+          'data-act="color" data-color="#e60012" title="红色" ' +
+          'style="background:#e60012"></button>' +
+        '<button class="pi-dot' + (!it.color || it.color === '#2b2b2b' ? ' active' : '') + '" ' +
+          'data-act="color" data-color="#2b2b2b" title="黑色" ' +
+          'style="background:#2b2b2b"></button>' +
+        '<button class="pi-dot' + (it.color === '#e6b422' ? ' active' : '') + '" ' +
+          'data-act="color" data-color="#e6b422" title="金色" ' +
+          'style="background:#e6b422"></button>' +
+      '</span>' +
+      '<span class="qty">' +
+        '<button data-act="dec">−</button>' +
+        '<input class="qty-input" type="number" min="0.5" step="0.5" value="' + it.qty + '" data-act="input">' +
+        '<button data-act="inc">+</button>' +
+      '</span>' +
+      '<span class="pi-price">¥' + fmt(it.price * it.qty) + '</span>' +
+      '<button class="del" data-act="del">✕</button>';
+    box.appendChild(el);
+  });
+
+  const sub = S.front.picked.reduce((s, i) => s + i.price * i.qty, 0);
+  const svc = S.front.svcOn ? sub * (S.front.svcRate || 0) / 100 : 0;
+  const total = sub + svc;
+  const people = parseInt(S.front.people, 10) || 0;
+  $('#sCount').textContent = S.front.picked.length;
+  $('#sSub').textContent   = '¥' + fmt(sub);
+  $('#sSvc').textContent   = '¥' + fmt(svc);
+  $('#sTotal').textContent = '¥' + fmt(total);
+  $('#sPer').textContent   = people > 0 ? '¥' + fmt(total / people) : '—';
+}
+
+function renderAdminCatOptions(){
+  const sel = $('#newDishCat');
+  if(!sel) return;
+  sel.innerHTML = CATS.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+  sel.value = '热菜';
+}
+function addPick(dish){
+  pushUndo();
+  if(dish.id){
+    const hit = S.dishes.find(x => x.id === dish.id);
+    if(hit) hit.hits = (+hit.hits || 0) + 1;
+  }
+  const ex = S.front.picked.find(p =>
+    p.name === dish.name && p.price === dish.price &&
+    p.cat === dish.cat && !p.color);
+  if(ex) ex.qty += 1;
+  else S.front.picked.push({
+    name: dish.name, price: dish.price, cat: dish.cat, qty: 1,
+    color: S.front.colorOverride || '',
+    temp: !!dish.temp
+  });
+  save(); renderFront(); renderPaperSoon();
+}
+
+let _adminFilter = '';
+let _bulkSelecting = false;
+let _bulkSelected = new Set();
+
+function renderAdminCatFilter(){
+  const box = $('#adminCatFilter');
+  box.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.textContent = '全部';
+  allBtn.className = _adminFilter === '' ? 'active' : '';
+  allBtn.onclick = () => { _adminFilter = ''; renderAdminDishes(); };
+  box.appendChild(allBtn);
+  CATS.forEach(c => {
+    if(!S.dishes.some(d => d.cat === c)) return;
+    const b = document.createElement('button');
+    b.textContent = c;
+    b.className = _adminFilter === c ? 'active' : '';
+    b.onclick = () => { _adminFilter = c; renderAdminDishes(); };
+    box.appendChild(b);
+  });
+}
+function updateBulkBar(){
+  const bar = $('#bulkBar'), cnt = $('#bulkCount'), confirmBtn = $('#bulkConfirm');
+  if(_bulkSelecting){
+    bar.classList.add('show');
+    cnt.textContent = '已选 ' + _bulkSelected.size + ' 项';
+    confirmBtn.style.display = _bulkSelected.size ? '' : 'none';
+  }else{
+    bar.classList.remove('show');
+  }
+}
+function renderAdminDishes(){
+  renderAdminCatOptions();
+  renderAdminCatFilter();
+  const wrap = $('#adminDishList');
+  wrap.innerHTML = '';
+
+  let list = S.dishes.slice();
+  if(_adminFilter) list = list.filter(d => d.cat === _adminFilter);
+  list.sort((a, b) =>
+    CATS.indexOf(a.cat) - CATS.indexOf(b.cat) ||
+    a.name.localeCompare(b.name, 'zh'));
+
+  if(!list.length){
+    wrap.innerHTML = '<div class="empty">该分类下没有菜品</div>';
+    updateBulkBar();
+    return;
+  }
+
+  list.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'admin-dish-card' +
+      (_bulkSelecting ? ' selecting' : '') +
+      (_bulkSelected.has(d.id) ? ' selected' : '');
+    card.innerHTML =
+      '<div class="row1">' +
+        '<input type="checkbox" class="chk"' + (_bulkSelected.has(d.id) ? ' checked' : '') + '>' +
+        '<input class="nm" value="' + esc(d.name) + '" placeholder="菜名">' +
+      '</div>' +
+      '<div class="row2">' +
+        '<input class="pr" type="number" step="0.01" value="' + d.price + '" placeholder="价格">' +
+        '<select class="cat">' + CATS.map(c =>
+          '<option value="' + c + '"' + (c === d.cat ? ' selected' : '') + '>' + c +
+          '</option>').join('') + '</select>' +
+      '</div>';
+
+    if(_bulkSelecting){
+      card.onclick = (e) => {
+        if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        if(_bulkSelected.has(d.id)) _bulkSelected.delete(d.id);
+        else _bulkSelected.add(d.id);
+        renderAdminDishes();
+      };
+      const chk = card.querySelector('.chk');
+      chk.onchange = () => {
+        if(chk.checked) _bulkSelected.add(d.id);
+        else _bulkSelected.delete(d.id);
+        renderAdminDishes();
+      };
+    }else{
+      card.querySelector('.nm').addEventListener('input', e => {
+        d.name = e.target.value; save(); renderFront(); renderPaperSoon();
+      });
+      card.querySelector('.pr').addEventListener('input', e => {
+        d.price = parseFloat(e.target.value) || 0;
+        save(); renderFront(); renderPaperSoon();
+      });
+      card.querySelector('.cat').addEventListener('change', e => {
+        d.cat = e.target.value;
+        save(); renderAdminDishes(); renderFront(); renderPaperSoon();
+      });
+    }
+    wrap.appendChild(card);
+  });
+  updateBulkBar();
+}
+
+function loadSavedLocal(){
+  try{ return JSON.parse(localStorage.getItem(LS_SAVED) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveSavedLocal(o){
+  try{ localStorage.setItem(LS_SAVED, JSON.stringify(o)); }
+  catch(e){ console.warn('本地存档写入失败', e); }
+}
+async function loadSavedCloud(){
+  try{
+    const rows = await sbFetch('saved_menus?select=name,front,saved_at');
+    const out = {};
+    (rows || []).forEach(r => {
+      out[r.name] = { front: r.front, savedAt: r.saved_at || 0 };
+    });
+    return out;
+  }catch(e){
+    console.warn('云端存档读取失败', e);
+    return null;
+  }
+}
+async function loadSavedMenusAll(){
+  const local = loadSavedLocal();
+  const cloud = await loadSavedCloud();
+  if(cloud === null){
+    let cache = {};
+    try{ cache = JSON.parse(localStorage.getItem(LS_SAVED_CACHE) || '{}'); }
+    catch(e){ cache = {}; }
+    const merged = Object.assign({}, cache, local);
+    merged.__offline = true;
+    return merged;
+  }
+  try{ localStorage.setItem(LS_SAVED_CACHE, JSON.stringify(cloud)); }
+  catch(e){ console.warn('存档缓存写入失败', e); }
+  const merged = Object.assign({}, local, cloud);
+  merged.__offline = false;
+  return merged;
+}
+async function saveOneMenu(name, data){
+  const local = loadSavedLocal();
+  local[name] = data;
+  saveSavedLocal(local);
+  try{
+    await sbFetch('saved_menus', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ name: name, front: data.front, saved_at: data.savedAt })
+    });
+    return { ok: true, cloud: true };
+  }catch(e){
+    console.warn('云端保存失败', e);
+    return { ok: true, cloud: false };
+  }
+}
+async function deleteOneMenu(name){
+  const local = loadSavedLocal();
+  delete local[name];
+  saveSavedLocal(local);
+  try{
+    await sbFetch('saved_menus?name=eq.' + encodeURIComponent(name), { method: 'DELETE' });
+    return { ok: true, cloud: true };
+  }catch(e){
+    console.warn('云端删除失败', e);
+    return { ok: true, cloud: false };
+  }
+}
+function snapshotFront(){
+  const f = S.front;
+  return {
+    date: f.date || '', meal: f.meal || '晚宴',
+    mealOther: f.mealOther || '', guest: f.guest || '',
+    people: f.people || '', chef: f.chef || '',
+    picked: clone(f.picked || []),
+    svcOn: !!f.svcOn, svcRate: f.svcRate != null ? f.svcRate : 10,
+    colorOverride: f.colorOverride || ''
+  };
+}
+function applySnapshot(front){
+  S.front.date = front.date || '';
+  S.front.meal = front.meal || '晚宴';
+  S.front.mealOther = front.mealOther || '';
+  S.front.guest = front.guest || '';
+  S.front.people = front.people || '';
+  S.front.chef = front.chef || '';
+  S.front.picked = clone(front.picked || []);
+  S.front.svcOn = !!front.svcOn;
+  S.front.svcRate = front.svcRate != null ? front.svcRate : 10;
+  S.front.colorOverride = front.colorOverride || '';
+}
+async function renderSavedList(){
+  const box = $('#savedList');
+  box.innerHTML = '<div class="hint" style="text-align:center;padding:8px 0">加载中…</div>';
+  const menus = await loadSavedMenusAll();
+  const offline = !!menus.__offline;
+  delete menus.__offline;
+  const names = Object.keys(menus);
+  const statusHtml = offline
+    ? '<div class="hint" style="text-align:center;padding:4px 0 8px;color:#e67e22">📴 离线模式 · 显示上次同步的存档</div>'
+    : '<div class="hint" style="text-align:center;padding:4px 0 8px;color:#4caf50">☁️ 已同步云端</div>';
+  if(!names.length){
+    box.innerHTML = statusHtml +
+      '<div class="hint" style="text-align:center;padding:8px 0">还没有存档</div>';
+    return;
+  }
+  box.innerHTML = statusHtml;
+  names.sort((a, b) => (menus[b].savedAt || 0) - (menus[a].savedAt || 0));
+  names.forEach(n => {
+    const row = document.createElement('div');
+    row.className = 'saved-row';
+    row.innerHTML =
+      '<span class="sname" title="' + esc(n) + '">' + esc(n) + '</span>' +
+      '<button class="btn tiny" data-a="apply">应用</button>' +
+      '<button class="btn tiny del" data-a="del" style="color:#c9ccd3">✕</button>';
+    row.querySelector('[data-a=apply]').addEventListener('click', () => {
+      if(!confirm('将覆盖当前菜单（已选菜品、菜单信息、服务费），继续？')) return;
+      pushUndo();
+      applySnapshot(menus[n].front);
+      save(); syncAdminInputs(); renderFront(); renderPaperSoon();
+      updateAllColorButtons();
+    });
+    row.querySelector('[data-a=del]').addEventListener('click', async () => {
+      if(!confirm('删除存档「' + n + '」？\n（本地和云端都会删除）')) return;
+      const r = await deleteOneMenu(n);
+      if(!r.cloud) toast('本地已删，云端删除失败');
+      renderSavedList();
+    });
+    box.appendChild(row);
+  });
+}
+
+function loadTpls(){
+  try{
+    let raw = localStorage.getItem(LS_TPL);
+    if(!raw){
+      for(const k of LS_TPL_LEGACY_KEYS){
+        const legacy = localStorage.getItem(k);
+        if(legacy){
+          try{ localStorage.setItem(LS_TPL, legacy); }catch(e){}
+          raw = legacy; break;
+        }
+      }
+    }
+    return JSON.parse(raw || '{}');
+  }catch(e){ return {}; }
+}
+function saveTpls(o){
+  try{ localStorage.setItem(LS_TPL, JSON.stringify(o)); }catch(e){}
+}
+function renderTplList(){
+  const boxEl = $('#tplList'), tpls = loadTpls(), names = Object.keys(tpls);
+  boxEl.innerHTML = names.length ? '' : '<div class="empty">还没有版式模板</div>';
+  names.forEach(n => {
+    const row = document.createElement('div');
+    row.className = 'saved-row';
+    row.innerHTML = '<span class="sname">' + esc(n) + '</span>' +
+      '<button class="btn tiny" data-a="apply">应用</button>' +
+      '<button class="btn tiny del" data-a="del" style="color:#c9ccd3">✕</button>';
+    row.querySelector('[data-a=apply]').addEventListener('click', () => {
+      const t = loadTpls()[n];
+      if(!t) return;
+      pushUndo();
+      S.layout = Object.assign(clone(DEFAULTS.layout), t.layout || {});
+      S.bg = Object.assign(clone(DEFAULTS.bg), t.bg || {});
+      applyUiFont();
+      save(); syncAdminInputs(); renderPaperSoon();
+      toast('已应用版式模板「' + n + '」');
+    });
+    row.querySelector('[data-a=del]').addEventListener('click', () => {
+      if(!confirm('删除版式模板「' + n + '」？')) return;
+      const t = loadTpls(); delete t[n]; saveTpls(t); renderTplList();
+    });
+    boxEl.appendChild(row);
+  });
+}
+
+function builtInSampleDishes(){
+  const picks = [];
+  ['餐前','冷菜','汤品','热菜','主食','点心','甜品','餐后'].forEach(cat => {
+    const list = S.dishes.filter(d => d.cat === cat);
+    const n = (cat === '热菜' || cat === '冷菜') ? 4 : 2;
+    list.slice(0, n).forEach(d => {
+      picks.push({ name: d.name, price: d.price, cat: d.cat, qty: 1, color: '' });
+    });
+  });
+  if(!picks.length){
+    defaultDishes().forEach(d => {
+      picks.push({ name: d.name, price: d.price, cat: d.cat, qty: 1, color: '' });
+    });
+  }
+  return {
+    front: {
+      date: todayStr(), meal: '晚宴', mealOther: '',
+      guest: '示例客人', people: 8, chef: '示例',
+      picked: picks, svcOn: false, svcRate: 10, colorOverride: ''
+    },
+    note: '示例菜品（内置）'
+  };
+}
+function showPreviewBanner(text){
+  $('#previewBannerText').textContent = text;
+  $('#previewBanner').style.display = 'flex';
+}
+function hidePreviewBanner(){
+  const b = $('#previewBanner');
+  if(b) b.style.display = 'none';
+}
+
+function syncAdminInputs(){
+  $$('[data-bind]').forEach(el => {
+    const path = el.dataset.bind, v = getPath(S, path);
+    if(el.type === 'checkbox') el.checked = !!v;
+    else el.value = (v == null ? '' : v);
+    if(path === 'bg.overlay') $('#overlayV').textContent = (v || 0) + '%';
+  });
+  $('#fDate').value = S.front.date || '';
+  $('#fMeal').value = S.front.meal || '晚宴';
+  $('#fMealOther').value = S.front.mealOther || '';
+  $('#fMealOtherWrap').style.display = S.front.meal === '其他' ? '' : 'none';
+  $('#fGuest').value = S.front.guest || '';
+  $('#fPeople').value = S.front.people || '';
+  $('#fChef').value = S.front.chef || '';
+  $('#svcOn').checked = !!S.front.svcOn;
+  $('#svcRate').value = S.front.svcRate != null ? S.front.svcRate : 10;
+  $('#showPriceOn').checked = !!S.layout.showPrice;
+  $('#showUnitOn').checked = !!S.layout.showUnit;
+  updateAllColorButtons();
+}
+
+async function exportPng(returnBlob){
+  if(typeof html2canvas === 'undefined'){
+    alert('导出 PNG 需要 html2canvas 库，请检查本地文件是否存在。');
+    return null;
+  }
+  if(document.fonts && document.fonts.ready){
+    try{ await document.fonts.ready; }catch(e){}
+    await new Promise(r => setTimeout(r, 300));
+  }
+  const paper = $('#paper');
+  if(!paper) return null;
+  const scaler = $('#paperScaler');
+  const oldTransform = scaler.style.transform;
+  const oldWidth = scaler.style.width;
+  const oldHeight = scaler.style.height;
+  scaler.style.transform = 'none';
+  scaler.style.width = 'auto';
+  scaler.style.height = 'auto';
+
+  try{
+    const canvas = await html2canvas(paper, {
+      scale: 2, useCORS: true, allowTaint: false,
+      backgroundColor: null, logging: false
+    });
+    scaler.style.transform = oldTransform;
+    scaler.style.width = oldWidth;
+    scaler.style.height = oldHeight;
+    if(returnBlob){
+      return await new Promise(res => canvas.toBlob(b => res(b), 'image/png'));
+    }
+    canvas.toBlob(blob => {
+      if(!blob){ alert('导出失败，请重试。'); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '宴席菜单-' + todayStr() + '.png';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }, 'image/png');
+  }catch(err){
+    console.error(err);
+    alert('导出失败：' + err.message);
+    scaler.style.transform = oldTransform;
+    scaler.style.width = oldWidth;
+    scaler.style.height = oldHeight;
+    return null;
+  }
+}
+
+/* ============ 事件绑定 ============ */
+$('#gateFront').addEventListener('click', () => enterRole('front'));
+$('#gateAdmin').addEventListener('click', () => enterRole('admin'));
+$('#btnExit').addEventListener('click', () => {
+  if(!confirm('退出到选择页？')) return;
+  _adminUnlocked = false;
+  showGate();
+});
+$$('.tabs button[data-view]').forEach(b =>
+  b.addEventListener('click', () => switchView(b.dataset.view)));
+
+$('#goPreview').addEventListener('click', () => {
+  if(!S.front.date){ alert('请先选择日期'); return; }
+  if(!S.front.people || S.front.people < 1){ alert('请填写人数（至少 1 位）'); return; }
+  if(!S.front.picked.length){ alert('请先点选菜品'); return; }
+  _previewOverride = null;
+  hidePreviewBanner();
+  switchView('preview');
+});
+$('#btnBackToAdmin').addEventListener('click', () => {
+  _previewOverride = null;
+  hidePreviewBanner();
+  switchView(_currentRole === 'front' ? 'front' : 'admin');
+});
+$('#btnUndo').addEventListener('click', doUndo);
+
+$('#btnUploadCloud').addEventListener('click', () => {
+  if(!confirm('确定要上传到云端？\n\n会把本地的菜品库和排版配置推送到服务器，覆盖云端当前版本。\n（不影响本地数据）')) return;
+  uploadToCloud();
+});
+$('#btnChangePwd').addEventListener('click', async () => {
+  const cur = getAdminPwd();
+  if(!cur){ alert('还没设置后台密码'); return; }
+  const oldP = await askPassword('请输入当前后台密码');
+  if(oldP == null) return;
+  if(oldP !== cur){ alert('密码错误'); return; }
+  const np1 = await askPassword('请输入新密码');
+  if(np1 == null) return;
+  if(!np1){ alert('新密码不能为空'); return; }
+  const np2 = await askPassword('请再次输入新密码');
+  if(np2 == null) return;
+  if(np1 !== np2){ alert('两次输入不一致'); return; }
+  setAdminPwd(np1);
+  toast('✅ 后台密码已修改');
+});
+$('#btnCheckUpdate').addEventListener('click', async () => {
+  const btn = $('#btnCheckUpdate');
+  if(btn.dataset.busy === '1') return;
+  btn.dataset.busy = '1';
+  const old = btn.textContent;
+  btn.textContent = '⏳';
+  btn.disabled = true;
+  try{ await pullFromCloud(true); }
+  finally{
+    btn.textContent = old;
+    btn.disabled = false;
+    btn.dataset.busy = '0';
+  }
+});
+$('#btnPreviewSample').addEventListener('click', async () => {
+  const menus = await loadSavedMenusAll();
+  delete menus.__offline;
+  const names = Object.keys(menus);
+  let chosen;
+  if(names.length){
+    const sel = await askSelect('选择用于预览的菜单存档', [
+      { value: '__builtin__', label: '（内置示例）' },
+      ...names.map(n => ({ value: n, label: n }))
+    ]);
+    if(sel == null) return;
+    if(sel === '__builtin__') chosen = builtInSampleDishes();
+    else{
+      const f = menus[sel].front;
+      chosen = {
+        front: {
+          date: f.date, meal: f.meal, mealOther: f.mealOther,
+          guest: f.guest, people: f.people, chef: f.chef,
+          picked: clone(f.picked || []),
+          svcOn: f.svcOn, svcRate: f.svcRate,
+          colorOverride: f.colorOverride || ''
+        },
+        note: '示例：' + sel
+      };
+    }
+  }else{
+    chosen = builtInSampleDishes();
+  }
+  _previewOverride = chosen;
+  showPreviewBanner('预览中 · ' + chosen.note);
+  switchView('preview');
+});
+$('#btnBulkDel').addEventListener('click', () => {
+  if(_bulkSelecting){
+    _bulkSelecting = false; _bulkSelected.clear();
+    renderAdminDishes(); return;
+  }
+  if(!S.dishes.length){ alert('菜品库是空的'); return; }
+  _bulkSelecting = true; _bulkSelected.clear();
+  renderAdminDishes();
+});
+$('#bulkConfirm').addEventListener('click', () => {
+  const n = _bulkSelected.size;
+  if(!n) return;
+  if(!confirm('确定删除选中的 ' + n + ' 个菜品？\n（可用「撤销」恢复）')) return;
+  pushUndo();
+  S.dishes = S.dishes.filter(d => !_bulkSelected.has(d.id));
+  _bulkSelecting = false; _bulkSelected.clear();
+  save(); renderAdminDishes(); renderFront(); renderPaperSoon();
+});
+$('#bulkCancel').addEventListener('click', () => {
+  _bulkSelecting = false; _bulkSelected.clear();
+  renderAdminDishes();
+});
+$('#btnTempDish').addEventListener('click', () => {
+  const fixedCats = CATS.filter(c => c !== '位菜');
+  const catOpts = fixedCats.map(c =>
+    '<option value="' + c + '">' + c + '</option>').join('');
+  showMask(
+    '<h3>添加临时菜</h3>' +
+    '<input id="__tdName" placeholder="菜名" autocomplete="off">' +
+    '<input id="__tdPrice" type="number" placeholder="价格" step="0.01">' +
+    '<input id="__tdQty" type="number" placeholder="份数" step="0.5" value="1" min="0.5">' +
+    '<select id="__tdCat">' + catOpts + '</select>' +
+    '<div class="row-btns">' +
+    '<button class="btn" id="__tdCancel">取消</button>' +
+    '<button class="btn primary" id="__tdOk">添加</button></div>'
+  );
+  setTimeout(() => $('#__tdName').focus(), 50);
+  function close(){ hideMask(); }
+  $('#__tdCancel').onclick = close;
+  $('#__tdOk').onclick = () => {
+    const name = ($('#__tdName').value || '').trim();
+    const price = parseFloat($('#__tdPrice').value) || 0;
+    const qty = Math.max(0.5, Math.round((parseFloat($('#__tdQty').value) || 1) * 10) / 10);
+    const cat = $('#__tdCat').value || '热菜';
+    if(!name){ alert('请输入菜名'); return; }
+    if(!CATS.includes(cat)){ alert('类目无效'); return; }
+    pushUndo();
+    S.front.picked.push({ name, price, cat, qty, color: S.front.colorOverride || '', temp: true });
+    save(); renderFront(); renderPaperSoon();
+    close();
+    toast('已添加临时菜「' + name + '」');
+  };
+});
+$('#addDishBtn').addEventListener('click', function(){
+  const name = ($('#newDishName').value || '').trim();
+  const price = parseFloat($('#newDishPrice').value) || 0;
+  const cat = $('#newDishCat').value || '热菜';
+  if(!name){ alert('请输入菜名'); $('#newDishName').focus(); return; }
+  pushUndo();
+  S.dishes.push({ id: uid(), name, price, cat, hits: 0 });
+  $('#newDishName').value = '';
+  $('#newDishPrice').value = '';
+  save(); renderAdminDishes(); renderFront(); renderPaperSoon();
+});
+function parseBulk(text){
+  return text.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(line => {
+    const p = line.split(/[,，\t|]/).map(s => s.trim());
+    const name = p[0] || '';
+    const price = parseFloat(p[1]) || 0;
+    const cat = CATS.includes(p[2]) ? p[2] : '热菜';
+    return name ? { id: uid(), name, price, cat, hits: 0 } : null;
+  }).filter(Boolean);
+}
+$('#bulkReplace').addEventListener('click', () => {
+  const list = parseBulk($('#bulkText').value);
+  if(!list.length){ alert('没有解析到有效数据'); return; }
+  pushUndo(); S.dishes = list;
+  save(); renderAdminDishes(); renderFront(); renderPaperSoon();
+  toast('已替换为 ' + list.length + ' 个菜品');
+});
+$('#bulkAppend').addEventListener('click', () => {
+  const list = parseBulk($('#bulkText').value);
+  if(!list.length){ alert('没有解析到有效数据'); return; }
+  pushUndo(); S.dishes = S.dishes.concat(list);
+  save(); renderAdminDishes(); renderFront(); renderPaperSoon();
+  toast('已追加 ' + list.length + ' 个菜品');
+});
+const SWATCHES = ['#fffdf6','#ffffff','#fdf6e3','#f7e8e8','#f0e6d2','#e8f0e8',
+  '#8c1c1c','#c0392b','#d4af37','#2b2b2b','#666666','#f2f3f5'];
+(function renderSwatches(){
+  const boxEl = $('#bgSwatches');
+  SWATCHES.forEach(c => {
+    const b = document.createElement('button');
+    b.style.background = c; b.title = c;
+    b.addEventListener('click', () => {
+      S.bg.color = c; save(); syncAdminInputs(); renderPaperSoon();
+    });
+    boxEl.appendChild(b);
+  });
+})();
+$('#tplSave').addEventListener('click', () => {
+  const name = ($('#tplName').value || '').trim();
+  if(!name){ alert('请输入模板名称'); return; }
+  const tpls = loadTpls();
+  tpls[name] = { layout: clone(S.layout), bg: clone(S.bg) };
+  saveTpls(tpls);
+  $('#tplName').value = '';
+  renderTplList();
+  toast('版式模板「' + name + '」已保存');
+});
+$('#btnSaveMenu').addEventListener('click', async () => {
+  const name = ($('#savedName').value || '').trim();
+  if(!name){ alert('请输入存档名称'); $('#savedName').focus(); return; }
+  if(!S.front.picked.length){ alert('当前还没有选菜，无需保存'); return; }
+  const menus = await loadSavedMenusAll();
+  delete menus.__offline;
+  if(menus[name] && !confirm('已有同名存档「' + name + '」，是否覆盖？')) return;
+  const data = { front: snapshotFront(), savedAt: Date.now() };
+  const r = await saveOneMenu(name, data);
+  $('#savedName').value = '';
+  renderSavedList();
+  toast(r.cloud
+    ? '已保存存档「' + name + '」\n（本地 + 云端）'
+    : '已保存到本地\n（云端同步失败）');
+});
+
+/* 已选菜品交互 */
+$('#pickedList').addEventListener('click', function(e){
+  const btn = e.target.closest('[data-act]');
+  if(!btn) return;
+  if(btn.tagName === 'INPUT') return;
+  const row = btn.closest('.picked-item'), i = +row.dataset.i, it = S.front.picked[i];
+  if(!it) return;
+  const act = btn.dataset.act;
+  if(act === 'color'){
+    const newColor = btn.dataset.color || '';
+    it.color = (newColor === '#2b2b2b') ? '' : newColor;
+    save(); renderFront(); renderPaperSoon();
+    return;
+  }
+  if(act === 'inc') it.qty = Math.round((it.qty + 0.5) * 10) / 10;
+  else if(act === 'dec'){
+    it.qty = Math.round((it.qty - 0.5) * 10) / 10;
+    if(it.qty < 0.5) S.front.picked.splice(i, 1);
+  }
+  else if(act === 'del') S.front.picked.splice(i, 1);
+  save(); renderFront(); renderPaperSoon();
+});
+$('#pickedList').addEventListener('input', function(e){
+  const inp = e.target.closest('.qty-input');
+  if(!inp) return;
+  const row = inp.closest('.picked-item'), i = +row.dataset.i, it = S.front.picked[i];
+  if(!it) return;
+  const raw = inp.value.trim();
+  if(raw === '' || raw === '-' || raw === '.') return;
+  const v = parseFloat(raw);
+  if(isNaN(v) || v <= 0) return;
+  it.qty = Math.round(v * 10) / 10;
+  save();
+  renderPaperSoon();
+  const priceEl = row.querySelector('.pi-price');
+  if(priceEl) priceEl.textContent = '¥' + fmt(it.price * it.qty);
+});
+$('#pickedList').addEventListener('change', function(e){
+  const inp = e.target.closest('.qty-input');
+  if(!inp) return;
+  const row = inp.closest('.picked-item'), i = +row.dataset.i, it = S.front.picked[i];
+  if(!it) return;
+  let v = parseFloat(inp.value);
+  if(isNaN(v) || v < 0.5) S.front.picked.splice(i, 1);
+  else it.qty = Math.round(v * 10) / 10;
+  save(); renderFront(); renderPaperSoon();
+});
+let dragIdx = null;
+const pickBox = $('#pickedList');
+pickBox.addEventListener('dragstart', e => {
+  const el = e.target.closest('.picked-item');
+  if(!el || e.target.tagName === 'INPUT') return;
+  dragIdx = +el.dataset.i;
+  el.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try{ e.dataTransfer.setData('text/plain', String(dragIdx)); }catch(err){}
+});
+pickBox.addEventListener('dragover', e => {
+  e.preventDefault();
+  pickBox.querySelectorAll('.over').forEach(x => x.classList.remove('over'));
+  const el = e.target.closest('.picked-item');
+  if(el) el.classList.add('over');
+});
+pickBox.addEventListener('drop', e => {
+  e.preventDefault();
+  const el = e.target.closest('.picked-item');
+  if(!el || dragIdx === null) return;
+  const to = +el.dataset.i;
+  const moved = S.front.picked.splice(dragIdx, 1)[0];
+  S.front.picked.splice(to, 0, moved);
+  dragIdx = null;
+  save(); renderFront(); renderPaperSoon();
+});
+pickBox.addEventListener('dragend', () => {
+  dragIdx = null;
+  pickBox.querySelectorAll('.dragging,.over').forEach(x =>
+    x.classList.remove('dragging','over'));
+});
+$('#libSearch').addEventListener('input', renderFront);
+$('#fDate').addEventListener('change', e => { S.front.date = e.target.value; save(); renderPaperSoon(); });
+$('#fMeal').addEventListener('change', e => {
+  S.front.meal = e.target.value;
+  $('#fMealOtherWrap').style.display = e.target.value === '其他' ? '' : 'none';
+  save(); renderPaperSoon();
+});
+$('#fMealOther').addEventListener('input', e => { S.front.mealOther = e.target.value; save(); renderPaperSoon(); });
+$('#fGuest').addEventListener('input', e => { S.front.guest = e.target.value; save(); renderPaperSoon(); });
+$('#fPeople').addEventListener('input', e => {
+  S.front.people = Math.max(0, parseInt(e.target.value, 10) || 0);
+  save(); renderFront(); renderPaperSoon();
+});
+$('#fChef').addEventListener('input', e => { S.front.chef = e.target.value; save(); renderPaperSoon(); });
+$('#svcOn').addEventListener('change', e => { S.front.svcOn = e.target.checked; save(); renderFront(); renderPaperSoon(); });
+$('#svcRate').addEventListener('input', e => { S.front.svcRate = parseFloat(e.target.value) || 0; save(); renderFront(); renderPaperSoon(); });
+$('#showPriceOn').addEventListener('change', e => { S.layout.showPrice = e.target.checked; save(); renderPaperSoon(); });
+$('#showUnitOn').addEventListener('change', e => { S.layout.showUnit = e.target.checked; save(); renderPaperSoon(); });
+
+/* 全部颜色 */
+function setAllColor(color){
+  if(!S.front.picked.length){ toast('还没有选菜'); return; }
+  pushUndo();
+  S.front.colorOverride = color;
+  S.front.picked.forEach(it => { it.color = color; });
+  save(); renderFront(); renderPaperSoon();
+  updateAllColorButtons();
+  const name = color === '#e60012' ? '红' : color === '#e6b422' ? '金' : '默认';
+  toast('全部已改为「' + name + '」色');
+}
+function updateAllColorButtons(){
+  const cur = S.front.colorOverride || '';
+  const pairs = [
+    ['#btnAllRed',   '#e60012'],
+    ['#btnAllGold',  '#e6b422'],
+    ['#btnAllBlack', '']
+  ];
+  pairs.forEach(([sel, val]) => {
+    const el = $(sel);
+    if(el){
+      el.style.opacity = (cur === val) ? '1' : '.45';
+      el.style.fontWeight = (cur === val) ? '700' : '400';
+    }
+  });
+}
+$('#btnAllRed').addEventListener('click', () => setAllColor('#e60012'));
+$('#btnAllBlack').addEventListener('click', () => setAllColor(''));
+$('#btnAllGold').addEventListener('click', () => setAllColor('#e6b422'));
+
+$('#btnClearPicked').addEventListener('click', () => {
+  if(!S.front.picked.length) return;
+  if(!confirm('清空已选菜品？')) return;
+  pushUndo();
+  S.front.picked = [];
+  S.front.colorOverride = '';
+  save(); renderFront(); renderPaperSoon();
+  updateAllColorButtons();
+});
+$$('[data-bind]').forEach(el => {
+  const evt = (el.type === 'checkbox' || el.tagName === 'SELECT' ||
+    el.type === 'color') ? 'change' : 'input';
+  el.addEventListener(evt, () => {
+    const path = el.dataset.bind;
+    let v;
+    if(el.type === 'checkbox') v = el.checked;
+    else if(el.type === 'number' || el.type === 'range') v = parseFloat(el.value) || 0;
+    else v = el.value;
+    setPath(S, path, v);
+    if(path === 'bg.overlay') $('#overlayV').textContent = v + '%';
+    if(path === 'layout.uiFont') applyUiFont();
+    save(); renderPaperSoon();
+  });
+});
+$('#aBgFile').addEventListener('change', function(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const img = new Image();
+  const r = new FileReader();
+  r.onload = () => { img.src = r.result; };
+  img.onload = () => {
+    const MAX = 1600;
+    let w = img.width, h = img.height;
+    if(Math.max(w, h) > MAX){
+      const k = MAX / Math.max(w, h);
+      w = Math.round(w * k); h = Math.round(h * k);
+    }
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    S.bg.image = cv.toDataURL('image/jpeg', 0.85);
+    S.bg.type = 'image';
+    save(); syncAdminInputs(); renderPaperSoon();
+  };
+  r.readAsDataURL(f);
+});
+$('#btnClearBg').addEventListener('click', () => {
+  S.bg.image = ''; S.bg.type = 'color';
+  save(); syncAdminInputs(); renderPaperSoon();
+});
+$('#exportCfg').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '宴席排菜单-配置-' + todayStr() + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+});
+$('#importCfg').addEventListener('change', function(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const o = JSON.parse(r.result), b = clone(DEFAULTS);
+      S = {
+        bg:     Object.assign(b.bg,     o.bg     || {}),
+        layout: Object.assign(b.layout, o.layout || {}),
+        dishes: Array.isArray(o.dishes) ? o.dishes : b.dishes,
+        front:  Object.assign(b.front,  o.front  || {})
+      };
+      applyUiFont();
+      save(); syncAdminInputs(); renderAdminDishes(); renderFront();
+      renderPaperSoon(); renderTplList();
+      updateAllColorButtons();
+      toast('导入成功');
+    }catch(err){ alert('导入失败：不是有效的配置文件'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+$('#resetCfg').addEventListener('click', () => {
+  if(!confirm('恢复默认设置和菜品，当前数据会丢失。确定？')) return;
+  pushUndo();
+  S = clone(DEFAULTS);
+  applyUiFont();
+  save(); syncAdminInputs(); renderAdminDishes(); renderFront();
+  renderPaperSoon(); renderTplList();
+  updateAllColorButtons();
+});
+$('#btnPrint').addEventListener('click', () => { window.print(); });
+$('#btnExportPng').addEventListener('click', async () => {
+  const btn = $('#btnExportPng');
+  const old = btn.textContent;
+  btn.textContent = '⏳ 导出中…';
+  btn.disabled = true;
+  await exportPng(false);
+  btn.textContent = old;
+  btn.disabled = false;
+});
+$('#btnShare').addEventListener('click', async () => {
+  const btn = $('#btnShare');
+  const old = btn.textContent;
+  btn.textContent = '⏳ 生成中…';
+  btn.disabled = true;
+  const blob = await exportPng(true);
+  btn.textContent = old;
+  btn.disabled = false;
+  if(!blob) return;
+  const fileName = '宴席菜单-' + todayStr() + '.png';
+  try{
+    const file = new File([blob], fileName, { type: 'image/png' });
+    if(navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({ files: [file], title: '宴席菜单', text: '宴席菜单' });
+      return;
+    }
+  }catch(err){
+    if(err && err.name === 'AbortError') return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  toast('图片已下载到本地，请手动发送到微信。');
+});
+
+function init(){
+  applyUiFont();
+  syncAdminInputs();
+  renderAdminDishes();
+  renderFront();
+  renderPaper();
+  renderTplList();
+  renderSavedList();
+  showGate();
+  window.addEventListener('resize', () => {
+    if($('#view-preview').classList.contains('active')) fitPaper();
+  });
+  setTimeout(() => {
+    autoCheckUpdate();
+    updateCloudStatus();
+  }, 800);
+}
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', init);
+}else{
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
