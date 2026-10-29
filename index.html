@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宴席排菜单 - 前台</title>
+<script src="html2canvas.min.js"></script>
+<style>
+@font-face{
+  font-family:'LXGW Wen Kai';
+  src:url('fonts/LXGWWenKai-Regular.woff2') format('woff2'),
+      url('fonts/LXGWWenKai-Regular.ttf') format('truetype');
+  font-weight:400;font-style:normal;font-display:swap;
+}
+:root{
+  --bg:#f2f3f5;--card:#fff;--line:#e4e6eb;--text:#25272b;--sub:#8a8f99;
+  --brand:#8c1c1c;--brand2:#c0392b;--radius:10px;
+  --ui-font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:var(--ui-font);background:var(--bg);color:var(--text);
+  font-size:14px;line-height:1.4;overscroll-behavior-y:contain}
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px;
+  padding:8px 14px;background:linear-gradient(135deg,#7c1616,#a52a2a);color:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);flex-wrap:wrap}
+.brand{font-weight:700;font-size:15px;letter-spacing:1px}
+.tabs{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap;align-items:center}
+.tabs button{background:rgba(255,255,255,.15);border:0;color:#fff;padding:6px 12px;
+  border-radius:999px;cursor:pointer;font-size:12.5px;font-family:inherit;position:relative;
+  touch-action:manipulation}
+.tabs button:hover{background:rgba(255,255,255,.28)}
+.tabs button.active{background:#fff;color:var(--brand);font-weight:600}
+.tabs .count{display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:18px;margin-left:4px;border-radius:999px;
+  background:rgba(255,255,255,.28);font-size:11.5px;font-weight:600;
+  vertical-align:1px}
+.tabs button.active .count{background:var(--brand);color:#fff}
+#btnCheckUpdate,#btnFullscreen{background:rgba(255,255,255,.18);border:0;color:#fff;
+  font-size:15px;cursor:pointer;padding:5px 9px;border-radius:999px;
+  transition:.2s;margin-left:4px;touch-action:manipulation}
+#btnCheckUpdate:hover,#btnFullscreen:hover{background:rgba(255,255,255,.3)}
+#btnCheckUpdate.hasNew{background:#ffd76a;color:#8a6d00}
+.save-hint{font-size:11.5px;color:rgba(255,255,255,.85);padding:3px 9px;
+  border-radius:999px;background:rgba(0,0,0,.15);transition:.3s}
+.save-hint.flash{background:#4caf50;color:#fff}
+main{padding:10px;max-width:1500px;margin:0 auto}
+.view{display:none}.view.active{display:block}
+.card{background:var(--card);border-radius:var(--radius);padding:10px 13px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:9px}
+.card h3{margin:0 0 7px;font-size:12.5px;color:var(--brand);font-weight:700}
+label.fld{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-bottom:4px;font-size:12.5px;color:#555;min-height:26px}
+label.fld:last-child{margin-bottom:0}
+label.fld input,label.fld select{padding:4px 8px;border:1px solid var(--line);
+  border-radius:6px;font-size:12.5px;font-family:inherit;color:var(--text);
+  background:#fafbfc;flex:1;max-width:170px;min-width:0;height:26px}
+label.fld input:focus,label.fld select:focus{
+  outline:2px solid rgba(140,28,28,.18);border-color:var(--brand2)}
+input[type=range]{flex:1;max-width:130px;accent-color:var(--brand2)}
+label.chk{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:12.5px;
+  color:#555;cursor:pointer;user-select:none;min-height:22px;touch-action:manipulation}
+label.chk input{width:15px;height:15px;accent-color:var(--brand2);cursor:pointer}
+.btn{padding:6px 11px;border-radius:7px;border:1px solid var(--line);background:#fff;
+  cursor:pointer;font-size:12.5px;font-family:inherit;color:var(--text);touch-action:manipulation}
+.btn:hover{border-color:var(--brand2);color:var(--brand2)}
+.btn.primary{background:linear-gradient(135deg,#a52a2a,#c0392b);color:#fff;border:0;font-weight:600}
+.btn.primary:hover{opacity:.9;color:#fff}
+.btn.block{width:100%;padding:10px;font-size:14px}
+.btn.tiny{padding:3px 8px;font-size:11.5px;border-radius:6px}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* 点菜页三栏布局 */
+.order-grid{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,4fr) minmax(0,2fr);
+  gap:9px;align-items:start}
+@media(max-width:1100px){ .order-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);} }
+@media(max-width:700px){ .order-grid{grid-template-columns:1fr;} }
+
+/* 大字号（点菜/已选页） */
+#view-order .card h3, #view-picked .card h3{ font-size:20px; }
+#view-order label.fld, #view-order label.chk{ font-size:18px; }
+#view-order label.fld input, #view-order label.fld select{ font-size:19px; height:36px; padding:6px 10px; }
+#view-order .btn, #view-picked .btn{ padding:9px 16px; font-size:18px; }
+#view-order .btn.tiny, #view-picked .btn.tiny{ font-size:15px; padding:5px 11px; }
+#view-order .search-row input{ padding:10px 13px; height:40px; font-size:18px; }
+
+.cat-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.cat-tabs button{font-size:19px;padding:6px 16px;border-radius:999px;
+  border:1px solid var(--line);background:#fff;cursor:pointer;font-family:inherit;color:#555;
+  touch-action:manipulation}
+.cat-tabs button:hover{border-color:var(--brand2);color:var(--brand2)}
+.cat-tabs button.active{background:linear-gradient(135deg,#a52a2a,#c0392b);
+  color:#fff;border:0;font-weight:600}
+.dish-lib{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+@media(max-width:1100px){ .dish-lib{grid-template-columns:repeat(3,1fr);} }
+@media(max-width:700px){ .dish-lib{grid-template-columns:repeat(2,1fr);} }
+.lib-item{display:flex;justify-content:space-between;align-items:center;gap:6px;
+  border:1px solid var(--line);cursor:pointer;background:#fff;user-select:none;
+  overflow:hidden;font-size:18px;padding:10px 12px;border-radius:8px;
+  touch-action:manipulation;-webkit-touch-callout:none}
+.lib-item:hover{border-color:var(--brand2);background:#fff7f5}
+.lib-item:active{transform:scale(.97)}
+.lib-item .p{color:var(--brand2);font-weight:600;white-space:nowrap;font-size:16px}
+.lib-item > span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.search-row{display:flex;gap:8px;margin-top:9px}
+.search-row input{flex:1;border:1px solid var(--line);font-family:inherit;border-radius:9px}
+
+/* 已选菜品列表 */
+#view-picked .card{max-width:920px;margin:0 auto}
+.picked-list{display:flex;flex-direction:column;max-height:calc(100vh - 280px);overflow:auto;
+  -webkit-overflow-scrolling:touch}
+.picked-item{display:flex;align-items:center;border-bottom:1px dashed var(--line);
+  cursor:pointer;font-size:18px;padding:4px 4px;gap:2px;
+  transition:background .12s;border-radius:6px;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.picked-item:last-child{border-bottom:0}
+.picked-item.selected{background:#fff4f2;box-shadow:inset 3px 0 0 var(--brand2)}
+.picked-item.dragging{opacity:.35;pointer-events:none}
+.picked-item.over{box-shadow:inset 0 3px 0 var(--brand2)}
+.grip{color:#b0b5bd;font-size:24px;touch-action:none;cursor:grab;
+  display:flex;align-items:center;justify-content:center;
+  width:44px;height:44px;flex:0 0 auto;
+  padding:0;user-select:none;-webkit-user-select:none;
+  border-radius:8px;transition:background .12s,color .12s}
+.grip:active{background:#f0f1f3;color:var(--brand2)}
+.picked-item.dragging .grip{cursor:grabbing;background:#fff4f2;color:var(--brand2)}
+body.dragging, body.dragging *{
+  -webkit-user-select:none!important;user-select:none!important;
+  -webkit-touch-callout:none!important;
+}
+.pi-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pi-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:18px}
+.pi-cat{color:var(--sub);font-size:15px;margin-left:6px}
+.pi-note{font-size:13px;color:#b5654e;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;line-height:1.25}
+.qty{display:flex;align-items:center;gap:3px}
+.qty button{width:28px;height:28px;font-size:18px;border-radius:6px;
+  border:1px solid var(--line);background:#fff;cursor:pointer;color:#555;padding:0;line-height:1;
+  touch-action:manipulation}
+.qty button:hover{border-color:var(--brand2);color:var(--brand2)}
+.qty-input{width:46px;height:28px;font-size:18px;text-align:center;
+  border:1px solid var(--line);border-radius:6px;background:#fafbfc;
+  font-family:inherit;color:var(--text);padding:0 4px}
+.qty-input:focus{outline:2px solid rgba(140,28,28,.18);border-color:var(--brand2)}
+.pi-price{color:var(--brand2);font-weight:600;text-align:right;font-size:18px;min-width:60px}
+.del{border:0;background:transparent;color:#c9ccd3;cursor:pointer;font-size:20px;padding:3px 8px;
+  touch-action:manipulation}
+.del:hover{color:#e74c3c}
+.empty{color:var(--sub);text-align:center;padding:14px 0;font-size:19px}
+
+/* 已选页底部工具栏 */
+.picked-toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;
+  margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.picked-toolbar .chk-all{display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border:1px solid var(--line);border-radius:999px;
+  font-size:15px;cursor:pointer;user-select:none;background:#fff;touch-action:manipulation}
+.picked-toolbar .chk-all input{width:16px;height:16px;accent-color:var(--brand2);cursor:pointer}
+.picked-toolbar .chk-all.on{background:#fff4f2;border-color:var(--brand2)}
+.picked-toolbar .color-btn{background:#fff}
+.picked-toolbar .spacer{flex:1}
+
+.stat-card{text-align:center}
+.stat{flex:1;min-width:0;padding:0 3px;border-right:1px dashed var(--line)}
+.stat:last-child{border-right:0}
+.stat span{display:block;color:var(--sub);margin-bottom:2px;font-size:13px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{color:var(--brand2);white-space:nowrap;font-size:19px}
+
+.saved-list{display:flex;flex-direction:column;gap:6px;margin-top:9px;
+  max-height:260px;overflow:auto}
+.saved-row{display:flex;align-items:center;gap:7px;padding:8px 9px;
+  border:1px solid var(--line);border-radius:7px;font-size:18px}
+.saved-row .sname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.saved-row .btn.tiny{padding:5px 11px;font-size:15px}
+.saved-row .btn.tiny.del{font-size:17px;padding:4px 8px}
+
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;
+  display:none;align-items:center;justify-content:center}
+.mask.show{display:flex}
+.mask .box{background:#fff;border-radius:12px;padding:22px 24px;width:340px;
+  max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.mask .box h3{margin:0 0 14px;font-size:16px;color:var(--brand);font-weight:700}
+.mask .box input,.mask .box select{width:100%;padding:10px 12px;border:1px solid var(--line);
+  border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:14px}
+.mask .box input:focus,.mask .box select:focus{
+  outline:2px solid rgba(140,28,28,.18);border-color:var(--brand2)}
+.mask .box .row-btns{margin-top:0;justify-content:flex-end}
+.mask .box .btn{padding:8px 18px;font-size:14px}
+.row-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.hint{color:var(--sub);font-size:11.5px}
+
+.preview-bar{display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap}
+#paperStage{position:relative;width:100%;overflow:hidden}
+#paperScaler{position:absolute;top:0;left:0;transform-origin:top left}
+#paper{width:297mm;height:210mm;background:#fff;position:relative;overflow:hidden;
+  box-shadow:0 8px 30px rgba(0,0,0,.16);border-radius:2px;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.p-overlay{position:absolute;inset:0;z-index:1;pointer-events:none}
+.p-content{position:absolute;inset:0;z-index:2}
+.p-info{position:absolute;display:flex;flex-direction:column;align-items:center;
+  gap:0;flex-wrap:nowrap}
+.p-info .seg-v{display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
+.p-info .seg-v > div{line-height:1;white-space:pre}
+.p-cols{position:absolute;left:0;right:0;display:flex;flex-direction:row-reverse;
+  align-items:flex-start}
+.p-col{display:flex;flex-direction:row-reverse;align-items:flex-start;flex:0 0 auto}
+.p-col > .cat{display:flex;flex-direction:column;align-items:center;
+  flex:0 0 auto;white-space:nowrap}
+.p-col > .cat > div{line-height:1;white-space:pre}
+.p-col > .dishes{display:flex;flex-direction:row-reverse;
+  align-items:flex-start;gap:0;flex:0 0 auto}
+.p-col > .dishes > .p-col-sub{display:flex;flex-direction:column;
+  gap:0;flex:0 0 auto;position:relative}
+.p-col .dish{display:flex;flex-direction:column;align-items:center;
+  flex:0 0 auto;white-space:nowrap;position:relative}
+.p-col .dish > div{line-height:1;white-space:pre}
+
+@media print{
+  @page{size:A4 landscape;margin:0}
+  html,body{margin:0!important;padding:0!important;background:#fff!important}
+  .topbar,.preview-bar,.hint,.mask{display:none!important}
+  main{padding:0!important;max-width:none!important}
+  .view{display:none!important}
+  #view-preview{display:block!important}
+  #paperStage{position:static!important;height:auto!important;
+    overflow:visible!important;padding:0!important}
+  #paperScaler{position:static!important;transform:none!important;
+    width:auto!important;height:auto!important}
+  #paper{box-shadow:none!important;border-radius:0!important;margin:0!important}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">🍽 宴席排菜单</div>
+  <nav class="tabs">
+    <button data-view="order" class="active">点菜</button>
+    <button data-view="picked">已选<span class="count" id="pickedCount">0</span></button>
+    <button data-view="preview">预览 · 打印</button>
+    <button id="btnFullscreen" title="全屏（横屏请手动旋转手机）">⛶</button>
+    <button id="btnCheckUpdate" title="检查更新">🔄</button>
+    <span class="save-hint" id="saveHint">已自动保存</span>
+  </nav>
+</div>
+
+<main>
+  <!-- ============ 点菜页 ============ -->
+  <section id="view-order" class="view active">
+    <div class="order-grid">
+      <div class="card" style="margin-bottom:0">
+        <h3>菜单信息</h3>
+        <label class="fld"><span>日期</span><input type="date" id="fDate"></label>
+        <label class="fld"><span>餐别</span>
+          <select id="fMeal">
+            <option value="早餐">早餐</option><option value="午餐">午餐</option>
+            <option value="晚餐">晚餐</option><option value="午市">午市</option>
+            <option value="晚市">晚市</option><option value="午宴">午宴</option>
+            <option value="晚宴" selected>晚宴</option><option value="其他">其他…</option>
+          </select>
+        </label>
+        <label class="fld" id="fMealOtherWrap" style="display:none"><span>其他餐别</span>
+          <input type="text" id="fMealOther" placeholder="自定义"></label>
+        <label class="fld"><span>客人信息</span>
+          <input type="text" id="fGuest" placeholder="如：吴先生"></label>
+        <label class="fld"><span>人数</span>
+          <input type="number" id="fPeople" min="1" step="1" placeholder="如：8"></label>
+        <label class="fld"><span>配菜人</span>
+          <input type="text" id="fChef" placeholder="如：路"></label>
+        <div style="display:flex;gap:16px;align-items:center;margin:6px 0 8px 0;flex-wrap:nowrap;">
+          <label class="chk" style="margin-bottom:0;"><input type="checkbox" id="showPriceOn"><span>显示菜品价格</span></label>
+          <label class="chk" style="margin-bottom:0;"><input type="checkbox" id="showUnitOn"><span>带 ¥ </span></label>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:0">
+        <h3>服务费 / 统计</h3>
+        <label class="chk"><input type="checkbox" id="svcOn"><span>收取服务费</span></label>
+        <label class="fld" style="justify-content:flex-start;gap:10px;">
+          <span>比例 %</span>
+          <input type="number" id="svcRate" min="0" step="0.1" value="10" style="max-width:70px;text-align:center;padding:0;">
+          <span style="margin-left:auto;font-size:16px;color:#555;">服务费</span>
+          <b id="sSvc" style="color:var(--brand2);font-size:20px;font-weight:700;margin-left:4px;">¥0</b>
+        </label>
+        <label class="fld"><span>冷菜分列阈值</span>
+          <input type="number" id="fSplitAt" min="2" max="30" step="1" value="6"></label>
+
+        <label class="fld" style="margin-top:6px;"><span>全单备注</span>
+          <input type="text" id="fNoteFull" placeholder="如：少辣、不用香菜"></label>
+        <label class="chk" style="margin-top:4px;"><input type="checkbox" id="showNotesOn"><span>打印显示备注文字</span></label>
+
+        <div class="stat-card" style="display:block;border-top:1px dashed var(--line);margin-top:10px;padding-top:10px;">
+          <div style="display:flex;justify-content:space-between;gap:4px;text-align:center;">
+            <div class="stat" style="flex:1;border-right:1px dashed var(--line);display:flex;flex-direction:column;align-items:center;">
+              <span style="font-size:13px;color:var(--sub);margin-bottom:2px;">菜品金额</span>
+              <b id="sSub" style="color:var(--brand2);font-size:18px;">¥0</b>
+            </div>
+            <div class="stat" style="flex:1;border-right:1px dashed var(--line);display:flex;flex-direction:column;align-items:center;">
+              <span style="font-size:13px;color:var(--sub);margin-bottom:2px;">总计</span>
+              <b id="sTotal" style="color:var(--brand2);font-size:18px;">¥0</b>
+            </div>
+            <div class="stat" style="flex:1;display:flex;flex-direction:column;align-items:center;">
+              <span style="font-size:13px;color:var(--sub);margin-bottom:2px;">人均</span>
+              <b id="sPer" style="color:var(--brand2);font-size:18px;">—</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:0">
+        <h3>💾 菜单存档</h3>
+        <label class="fld"><span>名称</span>
+          <input type="text" id="savedName" placeholder="如：婚宴A"></label>
+        <button class="btn primary block" id="btnSaveMenu" style="margin-top:6px">保存当前菜单</button>
+        <div class="saved-list" id="savedList"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:9px">
+      <h3>点选菜品</h3>
+      <div class="cat-tabs" id="catTabs"></div>
+      <div id="libList" class="dish-lib"></div>
+      <div class="search-row">
+        <input id="libSearch" placeholder="搜索菜名…（在当前分类下）">
+      </div>
+      <div class="row-btns" style="margin-top:9px">
+        <button class="btn" id="btnTempDish">＋ 临时菜</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 已选菜品页 ============ -->
+  <section id="view-picked" class="view">
+    <div class="card">
+      <h3>已选菜品
+        <span class="hint" style="margin-left:8px;font-weight:400;font-size:13px;">
+          点击菜品可多选 · 下方调色 / 备注（操作后自动取消选中）
+        </span>
+      </h3>
+      <div id="pickedList" class="picked-list"></div>
+      <div class="empty" id="pickedEmpty">还没有选菜</div>
+
+      <div class="picked-toolbar">
+        <label class="chk-all" id="chkAllWrap">
+          <input type="checkbox" id="chkAllColor"><span>全部</span>
+        </label>
+        <button class="btn tiny color-btn" data-color="red" style="color:#e60012;border-color:#e60012">● 红</button>
+        <button class="btn tiny color-btn" data-color="black" style="color:#2b2b2b">● 黑</button>
+        <button class="btn tiny color-btn" data-color="gold" style="color:#e6b422;border-color:#e6b422">● 金</button>
+        <button class="btn tiny" id="btnNoteSel">📝 备注</button>
+        <button class="btn tiny" id="btnMoveUp" title="同分类内上移">↑</button>
+        <button class="btn tiny" id="btnMoveDown" title="同分类内下移">↓</button>
+        <span class="spacer"></span>
+        <button class="btn tiny" id="btnUndo" disabled>↩ 撤销</button>
+        <button class="btn tiny" id="btnClearPicked">清空</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 预览 / 打印页 ============ -->
+  <section id="view-preview" class="view">
+    <div class="preview-bar">
+      <button class="btn primary" id="btnPrint">🖨 打印</button>
+      <button class="btn" id="btnExportPng">🖼 导出 PNG</button>
+      <button class="btn" id="btnShare">📤 分享</button>
+      <span class="hint">打印请选「A4 · 横向 · 边距：无 · 勾选背景图形」</span>
+      <button class="btn" style="margin-left:auto" id="btnBackToOrder">← 返回点菜</button>
+    </div>
+    <div id="paperStage">
+      <div id="paperScaler">
+        <div id="paper">
+          <div class="p-overlay"></div>
+          <div class="p-content">
+            <div class="p-cols"></div>
+            <div class="p-info"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="mask" id="mask"><div class="box" id="maskBox"></div></div>
+
+<script>
+(function(){
+'use strict';
+
+const SUPABASE_URL = 'https://ykqpmhbpgqksvbnxcctk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Wntf6NBFhTivQMCvGVnJ_w_9XH3Li_z';
+const SUPABASE_TABLE = 'menu_versions';
+
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => { const v = Math.round((+n || 0) * 100) / 100;
+  return v.toFixed(2).replace(/\.?0+$/, '') || '0'; };
+const uid = () => Math.random().toString(36).slice(2, 9);
+const clone = o => JSON.parse(JSON.stringify(o));
+const todayStr = () => { const d = new Date(), p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+const PT2MM = 0.3527777778;
+
+const COLORS = { red:'#e60012', black:'#2b2b2b', gold:'#e6b422' };
+const COLOR_NAMES = { red:'红', black:'黑', gold:'金' };
+
+function dateCN(s){
+  if(!s) return '';
+  const m = String(s).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(!m) return s;
+  return parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日';
+}
+function fastHash(o){
+  const s = JSON.stringify(o || null);
+  let h = 5381;
+  for(let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return h;
+}
+function ensureIds(arr){
+  (arr || []).forEach(it => { if(!it._id) it._id = uid(); });
+}
+
+const LS_KEY = 'banquet_menu';
+const LS_SAVED = 'banquet_menu_saved_v1';
+const LS_SAVED_CACHE = 'banquet_menu_saved_cache_v1';
+const LS_LOCAL_VER = 'banquet_menu_local_ver';
+const CATS = ['餐前','冷菜','汤品','热菜','位菜','主食','点心','甜品','酒水','餐后'];
+const CATS_PRINT = ['餐前','冷菜','汤品','热菜','主食','点心','甜品','酒水','餐后'];
+function printCatOf(cat){ return (cat === '位菜') ? '热菜' : cat; }
+
+const DEFAULT_UI_FONT = '-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+const KAI_FONT = '"LXGW Wen Kai","KaiTi","STKaiti",serif';
+
+const DEFAULTS = {
+  bg:{ type:'color', color:'#fffdf6', image:'', fit:'cover', overlay:0 },
+  layout:{
+    pagePadBottom:8,
+    catTop:7, colGap:6, rowGap:2,
+    nameOffsetTop:0, catNameGap:2, catGap:8,
+    infoRight:8, infoBottom:30, infoGap:4, infoToFirst:1.5, splitAt:6,
+    coldPairGap:2, coldWeiGap:1.5, hotWeiGap:8, coldQtyGap:1.5, hotQtyGap:8,
+    allowOverlap:false,
+    uiFont: DEFAULT_UI_FONT,
+    catFont: KAI_FONT, nameFont: KAI_FONT, infoFont: KAI_FONT,
+    catSize:18, nameSize:14, priceSize:14, qtySize:14, infoSize:22,
+    catSpacing:0.3, nameSpacing:0.15, infoSpacing:0.15, dateSpacing:0.35,
+    boldCat:true, boldName:false, boldInfo:false,
+    catColor:'#1a1a1a', nameColor:'#2b2b2b',
+    priceColor:'#8c1c1c', infoColor:'#1a1a1a',
+    showPrice:false, showQty:true, showUnit:false, showInfo:true,
+    infoBox:false, infoBoxPad:2, autoFit:true
+  },
+  dishes: [],
+  front:{
+    date:'', meal:'晚宴', mealOther:'', guest:'', people:'', chef:'',
+    picked:[], svcOn:false, svcRate:10, activeCat:'', colorOverride:'',
+    noteFull:'', showNotes:true
+  }
+};
+
+function normalizeDishes(arr){
+  return (arr || []).map(d => ({
+    id: d.id || uid(), name: d.name || '', price: +d.price || 0,
+    cat: CATS.includes(d.cat) ? d.cat : '热菜'
+  }));
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return clone(DEFAULTS);
+    const o = JSON.parse(raw), b = clone(DEFAULTS);
+    return {
+      bg:     Object.assign(b.bg,     o.bg     || {}),
+      layout: Object.assign(b.layout, o.layout || {}),
+      dishes: Array.isArray(o.dishes) ? normalizeDishes(o.dishes) : b.dishes,
+      front:  Object.assign(b.front,  o.front  || {})
+    };
+  }catch(e){ return clone(DEFAULTS); }
+}
+let S = load();
+if(!S.front.activeCat || !CATS.includes(S.front.activeCat)){
+  S.front.activeCat = CATS.find(c => S.dishes.some(d => d.cat === c)) || CATS[0];
+}
+ensureIds(S.front.picked);
+
+function applyUiFont(){
+  document.documentElement.style.setProperty('--ui-font',
+    S.layout.uiFont || DEFAULT_UI_FONT);
+}
+
+let _saveTimer = null, _saveDebounce = null;
+function showSaved(){
+  const el = $('#saveHint');
+  if(!el) return;
+  el.textContent = '✓ 已自动保存';
+  el.classList.add('flash');
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    el.classList.remove('flash');
+    el.textContent = '已自动保存';
+  }, 1200);
+}
+function save(){
+  clearTimeout(_saveDebounce);
+  _saveDebounce = setTimeout(() => {
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); showSaved(); }
+    catch(e){ alert('保存失败：本地存储空间不足（通常是背景图太大）。'); }
+  }, 300);
+}
+function saveNow(){
+  clearTimeout(_saveDebounce);
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); showSaved(); }catch(e){}
+}
+window.addEventListener('beforeunload', saveNow);
+
+let _exportUrl = null;
+function showMask(html){
+  $('#maskBox').innerHTML = html;
+  $('#mask').classList.add('show');
+}
+function hideMask(){
+  $('#mask').classList.remove('show');
+  $('#maskBox').innerHTML = '';
+  if(_exportUrl){ URL.revokeObjectURL(_exportUrl); _exportUrl = null; }
+}
+function toast(msg, duration){
+  const old = document.getElementById('__toast');
+  if(old) old.remove();
+  const el = document.createElement('div');
+  el.id = '__toast';
+  el.textContent = msg;
+  el.style.cssText = [
+    'position:fixed','left:50%','top:50%','transform:translate(-50%,-50%)',
+    'background:rgba(0,0,0,.82)','color:#fff','padding:14px 22px',
+    'border-radius:10px','font-size:15px','z-index:2000',
+    'max-width:80vw','text-align:center','line-height:1.5',
+    'box-shadow:0 8px 30px rgba(0,0,0,.3)','pointer-events:none',
+    'white-space:pre-wrap'
+  ].join(';');
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity .3s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 300);
+  }, duration || 1500);
+}
+
+/* ============ 云端通信 ============ */
+async function sbFetch(path, options){
+  const url = SUPABASE_URL + '/rest/v1/' + path;
+  const headers = {
+    'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json', ...(options && options.headers || {})
+  };
+  const res = await fetch(url, { ...(options || {}), headers });
+  const txt = await res.text();
+  if(!res.ok) throw new Error('云端请求失败 (' + res.status + ')：' + txt);
+  if(!txt) return null;
+  try{ return JSON.parse(txt); }catch(e){ return null; }
+}
+function getLocalVersion(){ return parseInt(localStorage.getItem(LS_LOCAL_VER) || '0', 10) || 0; }
+function setLocalVersion(v){ localStorage.setItem(LS_LOCAL_VER, String(v)); }
+async function fetchCloudVersion(){
+  const rows = await sbFetch(SUPABASE_TABLE + '?select=version,updated_at,data&id=eq.1', { method:'GET' });
+  return (rows && rows[0]) ? rows[0] : null;
+}
+async function pullFromCloud(interactive){
+  let cloud;
+  try{ cloud = await fetchCloudVersion(); }
+  catch(err){ if(interactive) alert('无法连接云端：' + err.message); return; }
+  if(!cloud){ if(interactive) alert('云端还没有数据，请先由管理员上传。'); return; }
+  if(interactive){
+    const cd = cloud.data || {};
+    const sameDishes = fastHash(cd.dishes) === fastHash(S.dishes);
+    const localLayoutForCmp = Object.assign({}, S.layout);
+    delete localLayoutForCmp.showPrice;
+    delete localLayoutForCmp.showUnit;
+    const sameLayout = fastHash(cd.layout) === fastHash(localLayoutForCmp);
+    const sameBg     = fastHash(cd.bg)     === fastHash(S.bg);
+    if(sameDishes && sameLayout && sameBg){
+      alert('本地和云端数据一致，无需更新。'); return;
+    }
+    if(!confirm('发现云端数据和本地不一致，是否用云端覆盖本地？\n\n' +
+      '云端版本：v' + cloud.version + '\n会覆盖本地的菜品库、排版、背景。\n' +
+      '（不影响已选菜品和存档）')) return;
+  }
+  const d = cloud.data || {};
+  if(Array.isArray(d.dishes)) S.dishes = normalizeDishes(d.dishes);
+  if(d.layout){
+    const keepPrice = S.layout.showPrice;
+    const keepUnit  = S.layout.showUnit;
+    S.layout = Object.assign(clone(DEFAULTS.layout), d.layout);
+    S.layout.showPrice = keepPrice;
+    S.layout.showUnit  = keepUnit;
+  }
+  if(d.bg)     S.bg     = Object.assign(clone(DEFAULTS.bg),     d.bg);
+  setLocalVersion(cloud.version);
+  applyUiFont(); saveNow();
+  syncInputs(); renderFront(); renderPaperSoon();
+  if(interactive) toast('✅ 已更新到 v' + cloud.version);
+}
+async function autoCheckUpdate(){
+  try{
+    const cloud = await fetchCloudVersion();
+    if(!cloud) return;
+    if(cloud.version > getLocalVersion()){
+      const btn = $('#btnCheckUpdate');
+      btn.classList.add('hasNew');
+      btn.title = '有新版 v' + cloud.version + '，点击更新';
+    }
+  }catch(e){}
+}
+
+/* ============ 撤销 ============ */
+let UNDO = [];
+function pushUndo(){
+  const bgNoImage = Object.assign({}, S.bg, { image: '' });
+  UNDO.push(JSON.stringify({ front:S.front, bg:bgNoImage }));
+  if(UNDO.length > 50) UNDO.shift();
+  $('#btnUndo').disabled = false;
+}
+function doUndo(){
+  if(!UNDO.length){ alert('没有可撤销的操作'); return; }
+  const snap = JSON.parse(UNDO.pop());
+  S.front = snap.front;
+  ensureIds(S.front.picked);
+  const curImage = S.bg.image;
+  S.bg = Object.assign({}, snap.bg, { image: curImage });
+  applyUiFont();
+  SELECTED.clear();
+  save(); syncInputs(); renderFront(); renderPaperSoon();
+  if(!UNDO.length) $('#btnUndo').disabled = true;
+}
+
+/* ============ 已选行选中状态 ============ */
+let SELECTED = new Set();
+function pruneSelected(){
+  const ids = new Set(S.front.picked.map(it => it._id).filter(Boolean));
+  for(const id of SELECTED) if(!ids.has(id)) SELECTED.delete(id);
+}
+
+/* ============ 合并重复菜品 ============ */
+function mergeDuplicatePicked(){
+  const out = [];
+  const map = new Map();
+  S.front.picked.forEach(it => {
+    if(!it._id) it._id = uid();
+    const key = [it.name, it.price, it.cat, it.color || '',
+      it.temp ? 'T' : 'N'].join('\u0001');
+    if(map.has(key)){
+      const t = map.get(key);
+      t.qty = Math.round((t.qty + it.qty) * 10) / 10;
+    }else{
+      const copy = Object.assign({}, it);
+      map.set(key, copy);
+      out.push(copy);
+    }
+  });
+  S.front.picked = out;
+  pruneSelected();
+}
+
+/* ============ 视图切换 ============ */
+function switchView(name){
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  $$('.tabs button[data-view]').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === name));
+  if(name === 'preview'){ renderPaper(); requestAnimationFrame(fitPaper); }
+  if(name === 'order' || name === 'picked') renderFront();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function fitPaper(){
+  const stage = $('#paperStage'), scaler = $('#paperScaler'), paper = $('#paper');
+  if(!stage || !paper) return;
+  const pw = paper.offsetWidth, ph = paper.offsetHeight;
+  if(!pw) return;
+  const avail = stage.clientWidth || pw;
+  const scale = Math.min(1, avail / pw);
+  scaler.style.width = pw + 'px';
+  scaler.style.height = ph + 'px';
+  scaler.style.transformOrigin = 'top left';
+  const left = Math.max(0, (avail - pw * scale) / 2);
+  scaler.style.transform = 'translateX(' + left + 'px) scale(' + scale + ')';
+  stage.style.height = (ph * scale + 12) + 'px';
+}
+
+/* ============ 纸张渲染核心 ============ */
+function makeVBlock(chars, font, size, color, bold, spacing, marginTopMM){
+  const box = document.createElement('div');
+  box.style.display = 'flex';
+  box.style.flexDirection = 'column';
+  box.style.alignItems = 'center';
+  box.style.fontFamily = font;
+  box.style.fontSize = size + 'pt';
+  box.style.color = color;
+  box.style.fontWeight = bold ? '700' : '400';
+  if(marginTopMM) box.style.marginTop = marginTopMM + 'mm';
+  chars.forEach((ch, i) => {
+    const c = document.createElement('div');
+    c.textContent = ch;
+    c.style.whiteSpace = 'pre';
+    c.style.lineHeight = '1';
+    let mbMM = 0;
+    if(i < chars.length - 1 && spacing > 0){
+      mbMM = spacing * size * PT2MM;
+    }
+    const isNarrow = (ch === '.' || ch === ',' || ch === '·' || ch === ':');
+    const isBracket = (ch === '[' || ch === ']');
+    if(isNarrow){
+      c.style.fontSize = (size * 1.2) + 'pt';
+      c.style.transform = 'translateY(' + (-0.8 * size * PT2MM) + 'mm)';
+      mbMM -= 1 * size * PT2MM;
+    } else if (isBracket) {
+      c.style.transform = 'rotate(90deg)';
+      mbMM -= 0.2 * size * PT2MM;
+    }
+    if(mbMM !== 0) c.style.marginBottom = mbMM + 'mm';
+    box.appendChild(c);
+  });
+  return box;
+}
+
+function dishParts(d, L, peopleNum, isCold){
+  const qty = +d.qty || 1;
+  const price = +d.price || 0;
+  const showQty = L.showQty && qty !== 1;
+  const showPrice = L.showPrice && price > 0;
+  const showNotes = S.front.showNotes !== false;
+  const noteStr = (d.note && showNotes) ? '[' + d.note + ']' : '';
+  let qtyText = null, gapRatio = 0;
+  if(showQty){
+    qtyText = (peopleNum > 1 && qty === peopleNum) ? '位' : String(qty);
+    if(qtyText === '位'){
+      gapRatio = isCold ? (L.coldWeiGap != null ? L.coldWeiGap : 1.5) : (L.hotWeiGap != null ? L.hotWeiGap : 8);
+    }else{
+      gapRatio = isCold ? (L.coldQtyGap != null ? L.coldQtyGap : 1.5) : (L.hotQtyGap != null ? L.hotQtyGap : 8);
+    }
+  }
+  return { name: d.name + noteStr, qtyText, showQty, showPrice, price, gapRatio };
+}
+
+function dishShowsWei(d, L, peopleNum){
+  const qty = +d.qty || 1;
+  return !!(L.showQty && qty !== 1 && peopleNum > 1 && qty === peopleNum);
+}
+function dishCharCount(d, L, peopleNum, isCold){
+  const p = dishParts(d, L, peopleNum, isCold);
+  let n = (p.name.length || 1);
+  if(p.showQty){
+    n += p.gapRatio;
+    if(p.qtyText !== '位') n += String(p.qtyText).length;
+  }
+  if(p.showPrice){
+    if(p.showQty) n += 1;
+    n += String(fmt(p.price)).length + (L.showUnit ? 1 : 0);
+  }
+  return n;
+}
+function pickNameColor(d, L, globalColor){ return d.color || globalColor || L.nameColor; }
+function pickMetaColor(d, L, globalColor){ return d.color || globalColor || L.priceColor; }
+
+function appendPrice(row, p, L, priceSize, metaColor){
+  if(!p.showPrice) return;
+  if(p.showQty){
+    row.appendChild(makeVBlock(['*'], L.nameFont, priceSize, metaColor, false, 0, 0));
+  }
+  const priceTxt = (L.showUnit ? '¥' : '') + fmt(p.price);
+  row.appendChild(makeVBlock(
+    String(priceTxt).split(''), L.nameFont, priceSize, metaColor, false, L.nameSpacing, 0));
+}
+
+function makeDishEl(d, L, fitSize, peopleNum, isCold, globalColor){
+  const p = dishParts(d, L, peopleNum, isCold);
+  const row = document.createElement('div');
+  row.className = 'dish';
+  const nameColor = pickNameColor(d, L, globalColor);
+  const metaColor = pickMetaColor(d, L, globalColor);
+  row.appendChild(makeVBlock(
+    String(p.name).split(''), L.nameFont, fitSize, nameColor, L.boldName, L.nameSpacing, 0));
+  if(p.showQty){
+    const qtySize = (L.qtySize != null ? L.qtySize : fitSize);
+    const gapMM = p.gapRatio * fitSize * PT2MM;
+    row.appendChild(makeVBlock(
+      String(p.qtyText).split(''), L.nameFont, qtySize, metaColor, false, L.nameSpacing, gapMM));
+  }
+  appendPrice(row, p, L, (L.priceSize != null ? L.priceSize : fitSize), metaColor);
+  return row;
+}
+function makeAlignedDishEl(d, L, fitSize, peopleNum, isCold, alignLineRatio, globalColor){
+  const p = dishParts(d, L, peopleNum, isCold);
+  const row = document.createElement('div');
+  row.className = 'dish';
+  const nameColor = pickNameColor(d, L, globalColor);
+  const metaColor = pickMetaColor(d, L, globalColor);
+  row.appendChild(makeVBlock(
+    String(p.name).split(''), L.nameFont, fitSize, nameColor, L.boldName, L.nameSpacing, 0));
+  const spacingF = 1 + (L.nameSpacing || 0);
+  const gapChars = Math.max(0, alignLineRatio - p.name.length);
+  const gapMM = gapChars * fitSize * PT2MM * spacingF;
+  row.appendChild(makeVBlock(['位'], L.nameFont, fitSize, metaColor, false, L.nameSpacing, gapMM));
+  appendPrice(row, p, L, (L.priceSize != null ? L.priceSize : fitSize), metaColor);
+  return row;
+}
+
+let _paperRaf = 0;
+function renderPaperSoon(){
+  if(_paperRaf) return;
+  _paperRaf = requestAnimationFrame(() => {
+    _paperRaf = 0;
+    renderPaper();
+  });
+}
+
+function renderPaper(){
+  const L = S.layout, B = S.bg;
+  const F = S.front;
+  const paper = $('#paper');
+  if(!paper) return;
+  const colorOverride = F.colorOverride || '';
+
+  if(B.type === 'image' && B.image){
+    paper.style.backgroundColor = B.color || '#fff';
+    paper.style.backgroundImage = 'url("' + B.image + '")';
+    paper.style.backgroundSize = B.fit || 'cover';
+    paper.style.backgroundPosition = 'center center';
+    paper.style.backgroundRepeat = 'no-repeat';
+  }else{
+    paper.style.backgroundColor = B.color || '#fff';
+    paper.style.backgroundImage = 'none';
+  }
+  paper.querySelector('.p-overlay').style.background =
+    'rgba(255,255,255,' + ((B.overlay || 0) / 100) + ')';
+
+  const groups = {};
+  CATS_PRINT.forEach(c => groups[c] = []);
+  F.picked.forEach(d => {
+    const rawCat = CATS.includes(d.cat) ? d.cat : '热菜';
+    const c = printCatOf(rawCat);
+    if(!groups[c]) groups[c] = [];
+    groups[c].push(d);
+  });
+
+  const peopleNum = parseInt(F.people, 10) || 0;
+
+  let alignBaseChars = 0;
+  CATS_PRINT.forEach(cat => {
+    const list = groups[cat];
+    if(!list.length) return;
+    const isCold = (cat === '冷菜');
+    const isCold2 = (isCold && list.length >= (L.splitAt || 6));
+    if(isCold2) return;
+    list.forEach(d => {
+      if(!dishShowsWei(d, L, peopleNum)) return;
+      const nameLen = Math.min(d.name.length, 6);
+      if(nameLen > alignBaseChars) alignBaseChars = nameLen;
+    });
+  });
+  const hotWeiGapVal = (L.hotWeiGap != null ? L.hotWeiGap : 8);
+  const alignLineRatio = alignBaseChars + hotWeiGapVal;
+
+  /* 信息栏 */
+  const info = paper.querySelector('.p-info');
+  info.innerHTML = '';
+  info.style.display = L.showInfo ? 'flex' : 'none';
+  info.style.right = L.infoRight + 'mm';
+  info.style.top = 'auto';
+  info.style.bottom = (L.infoBottom != null ? L.infoBottom : 30) + 'mm';
+  info.style.gap = L.infoGap + 'mm';
+  info.style.border = 'none';
+  info.style.padding = '0';
+  if(L.showInfo){
+    if(L.infoBox){
+      info.style.border = '0.4mm solid ' + (colorOverride || L.infoColor);
+      info.style.padding = L.infoBoxPad + 'mm';
+    }
+    const meal = F.meal === '其他' ? (F.mealOther || '') : (F.meal || '');
+    const people = F.people ? F.people + '位' : '';
+    [
+      { txt: dateCN(F.date), spacing: L.dateSpacing },
+      { txt: meal,           spacing: L.infoSpacing },
+      { txt: F.guest || '',  spacing: L.infoSpacing },
+      { txt: people,         spacing: L.infoSpacing },
+      { txt: F.chef || '',   spacing: L.infoSpacing }
+    ].forEach(seg => {
+      if(!seg.txt) return;
+      const el = makeVBlock(
+        String(seg.txt).split(''), L.infoFont, L.infoSize,
+        colorOverride || L.infoColor,
+        L.boldInfo, seg.spacing, 0);
+      el.classList.add('seg-v');
+      info.appendChild(el);
+    });
+  }
+
+  /* 类目列 */
+  const cols = paper.querySelector('.p-cols');
+  cols.innerHTML = '';
+  cols.style.top = (L.catTop * 10) + 'mm';
+  cols.style.gap = L.colGap + 'mm';
+  let infoWidthMM = 0;
+  if(L.showInfo && info.offsetWidth) infoWidthMM = info.offsetWidth * 25.4 / 96;
+  cols.style.paddingRight = (L.infoRight + infoWidthMM + L.infoToFirst * 10) + 'mm';
+  const availMM = 210 - L.catTop * 10 - L.catSize * PT2MM * 1.6
+    - L.catGap - (L.pagePadBottom || 8);
+  const allowNeg = !!L.allowOverlap;
+
+  const plans = [];
+  CATS_PRINT.forEach(cat => {
+    const list = groups[cat];
+    if(!list.length) return;
+    const isCold = (cat === '冷菜');
+    const isCold2 = (isCold && list.length >= (L.splitAt || 6));
+    const subColumns = [];
+    if(isCold2){
+      const byLen = list.slice().sort((a, b) =>
+        (a.name.length - b.name.length) || a.name.localeCompare(b.name, 'zh'));
+      const topCount = Math.ceil(byLen.length / 2);
+      const top = byLen.slice(0, topCount);
+      const bottom = byLen.slice(topCount);
+      for(let i = 0; i < topCount; i++){
+        const pair = [top[i]];
+        if(bottom[i]) pair.push(bottom[i]);
+        subColumns.push(pair);
+      }
+    }else{
+      list.forEach(d => subColumns.push([d]));
+    }
+    plans.push({ cat, isCold, isCold2, subColumns });
+  });
+
+  let fitSize = L.nameSize;
+  if(L.autoFit !== false && plans.length){
+    const spacingF = 1 + (L.nameSpacing || 0);
+    const innerGap = n => {
+      if(n <= 1) return 0;
+      let g = L.rowGap != null ? L.rowGap : 2;
+      if(!allowNeg) g = Math.max(0, g);
+      return g * (n - 1);
+    };
+    const needOf = (plan, sz) => {
+      let m = 0;
+      plan.subColumns.forEach(pair => {
+        const chars = pair.reduce((s, d) =>
+          s + dishCharCount(d, L, peopleNum, plan.isCold), 0);
+        const v = chars * sz * PT2MM * spacingF + innerGap(pair.length);
+        if(v > m) m = v;
+      });
+      return m;
+    };
+    let sz = L.nameSize, guard = 0;
+    while(sz > 4 && guard++ < 500){
+      let ok = true;
+      for(let i = 0; i < plans.length; i++){
+        if(needOf(plans[i], sz) > availMM){ ok = false; break; }
+      }
+      if(ok) break;
+      sz = Math.max(4, +(sz - 0.5).toFixed(1));
+    }
+    fitSize = sz;
+  }
+
+  plans.forEach(plan => {
+    const cat = plan.cat, isCold = plan.isCold, isCold2 = plan.isCold2;
+    const subColumns = plan.subColumns;
+    const col = document.createElement('div');
+    col.className = 'p-col';
+    const dishesWrap = document.createElement('div');
+    dishesWrap.className = 'dishes';
+    let cg = L.colGap != null ? L.colGap : 6;
+    if(!allowNeg) cg = Math.max(0, cg);
+    dishesWrap.style.gap = cg + 'mm';
+
+    let coldTopMaxChars = 0, coldPairGapMM = 0;
+    if(isCold2){
+      subColumns.forEach(pair => {
+        if(pair.length >= 1){
+          const c = dishCharCount(pair[0], L, peopleNum, isCold);
+          if(c > coldTopMaxChars) coldTopMaxChars = c;
+        }
+      });
+      const ratio = L.coldPairGap != null ? L.coldPairGap : 2;
+      coldPairGapMM = ratio * fitSize * PT2MM;
+    }
+    const colAlign = !isCold2;
+
+    subColumns.forEach(pair => {
+      const sub = document.createElement('div');
+      sub.className = 'p-col-sub';
+      if(isCold2 && pair.length === 2){
+        const spacingF = 1 + (L.nameSpacing || 0);
+        const topSlotMM = coldTopMaxChars * fitSize * PT2MM * spacingF;
+        const topRow = document.createElement('div');
+        topRow.style.height = topSlotMM + 'mm';
+        topRow.style.display = 'flex';
+        topRow.style.alignItems = 'flex-start';
+        topRow.appendChild(makeDishEl(pair[0], L, fitSize, peopleNum, isCold, colorOverride));
+        sub.appendChild(topRow);
+        const bottomEl = makeDishEl(pair[1], L, fitSize, peopleNum, isCold, colorOverride);
+        bottomEl.style.marginTop = coldPairGapMM + 'mm';
+        sub.appendChild(bottomEl);
+      }else{
+        pair.forEach(d => {
+          const showWei = dishShowsWei(d, L, peopleNum);
+          if(colAlign && showWei){
+            sub.appendChild(makeAlignedDishEl(d, L, fitSize, peopleNum, isCold, alignLineRatio, colorOverride));
+          }else{
+            sub.appendChild(makeDishEl(d, L, fitSize, peopleNum, isCold, colorOverride));
+          }
+        });
+      }
+      dishesWrap.appendChild(sub);
+    });
+
+    const nameEl = makeVBlock(
+      String(cat).split(''), L.catFont, L.catSize,
+      colorOverride || L.catColor,
+      L.boldCat, L.catSpacing, 0);
+    nameEl.classList.add('cat');
+    nameEl.style.marginLeft = (L.catNameGap != null ? L.catNameGap : 2) + 'mm';
+    col.appendChild(nameEl);
+    col.appendChild(dishesWrap);
+    if(L.nameOffsetTop) dishesWrap.style.marginTop = L.nameOffsetTop + 'mm';
+    cols.appendChild(col);
+  });
+
+  /* 全单备注：顶部横排 + 右侧竖排 */
+  paper.querySelector('.p-note-h')?.remove();
+  paper.querySelector('.p-note-v')?.remove();
+  const noteContent = F.noteFull ? F.noteFull.trim() : '';
+  if(F.showNotes !== false && noteContent){
+    const noteSize = 22;
+
+    const hEl = document.createElement('div');
+    hEl.className = 'p-note-h';
+    hEl.style.cssText = 'position:absolute;top:42mm;left:135mm;width:120mm;' +
+                        'font-size:' + noteSize + 'pt;font-family:' + L.nameFont + ';' +
+                        'color:' + (colorOverride || L.nameColor) + ';' +
+                        'line-height:1.4;letter-spacing:2px;';
+    hEl.textContent = noteContent;
+    paper.querySelector('.p-content').appendChild(hEl);
+
+    const vEl = document.createElement('div');
+    vEl.className = 'p-note-v';
+    vEl.style.cssText = 'position:absolute;top:75mm;right:25mm;height:100mm;' +
+                        'writing-mode:vertical-rl;font-size:' + noteSize + 'pt;' +
+                        'font-family:' + L.nameFont + ';' +
+                        'color:' + (colorOverride || L.nameColor) + ';' +
+                        'line-height:1.4;letter-spacing:4px;';
+    vEl.textContent = noteContent;
+    paper.querySelector('.p-content').appendChild(vEl);
+  }
+}
+
+/* ============ 前台渲染（拆分，减少抖动） ============ */
+function renderCatTabs(){
+  const box = $('#catTabs');
+  box.innerHTML = '';
+  CATS.forEach(c => {
+    if(!S.dishes.some(d => d.cat === c)) return;
+    const b = document.createElement('button');
+    b.textContent = c;
+    b.className = (c === S.front.activeCat) ? 'active' : '';
+    b.addEventListener('click', () => {
+      S.front.activeCat = c;
+      save(); renderCatTabs(); renderLib();
+    });
+    box.appendChild(b);
+  });
+}
+
+function renderLib(){
+  const kw = ($('#libSearch').value || '').trim().toLowerCase();
+  const cat = S.front.activeCat;
+  const lib = $('#libList');
+  lib.innerHTML = '';
+  const list = S.dishes.filter(d =>
+    (!cat || d.cat === cat) && (!kw || d.name.toLowerCase().includes(kw)));
+  if(!S.dishes.length){
+    lib.innerHTML = '<div class="empty">菜品库为空，请点击右上角 🔄 从云端拉取</div>';
+  }else if(!list.length){
+    lib.innerHTML = '<div class="empty">该分类下没有菜品</div>';
+  }
+  list.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'lib-item';
+    el.innerHTML = '<span>' + esc(d.name) + '</span>' +
+      '<span class="p">¥' + fmt(d.price) + '</span>';
+    el.addEventListener('click', () => addPick(d));
+    lib.appendChild(el);
+  });
+}
+
+function renderPicked(){
+  pruneSelected();
+  const box = $('#pickedList');
+  const st = box.scrollTop;              // 保留滚动位置，避免跳回顶部
+  box.innerHTML = '';
+  const count = S.front.picked.length;
+  $('#pickedEmpty').style.display = count ? 'none' : '';
+  const indexed = S.front.picked.map((it, i) => ({ it, i }));
+  indexed.sort((a, b) => {
+    const ca = CATS.indexOf(a.it.cat), cb = CATS.indexOf(b.it.cat);
+    if(ca !== cb) return ca - cb;
+    return a.i - b.i;
+  });
+  indexed.forEach(({ it, i }) => {
+    const el = document.createElement('div');
+    el.className = 'picked-item' + (SELECTED.has(it._id) ? ' selected' : '');
+    el.dataset.i = i;
+    el.dataset.id = it._id;
+    el.innerHTML =
+      '<span class="grip" title="按住拖动排序">⠿</span>' +
+      '<span class="pi-body">' +
+        '<span class="pi-name">' + esc(it.name) +
+          '<span class="pi-cat">' + esc(it.cat) + '</span>' +
+          (it.temp ? '<span class="pi-cat" style="color:#e67e22"> · 临时</span>' : '') +
+        '</span>' +
+        (it.note ? '<span class="pi-note">📝 ' + esc(it.note) + '</span>' : '') +
+      '</span>' +
+      '<span class="qty">' +
+        '<button data-act="dec">−</button>' +
+        '<input class="qty-input" type="number" min="0.5" step="0.5" value="' + it.qty + '" data-act="input">' +
+        '<button data-act="inc">+</button>' +
+      '</span>' +
+      '<span class="pi-price">¥' + fmt(it.price * it.qty) + '</span>' +
+      '<button class="del" data-act="del">✕</button>';
+    box.appendChild(el);
+  });
+  box.scrollTop = st;
+}
+
+function renderStats(){
+  const count = S.front.picked.length;
+  $('#pickedCount').textContent = count;
+  const sub = S.front.picked.reduce((s, i) => s + i.price * i.qty, 0);
+  const svc = S.front.svcOn ? sub * (S.front.svcRate || 0) / 100 : 0;
+  const total = sub + svc;
+  const people = parseInt(S.front.people, 10) || 0;
+  $('#sSub').textContent   = '¥' + fmt(sub);
+  $('#sSvc').textContent   = '¥' + fmt(svc);
+  $('#sTotal').textContent = '¥' + fmt(total);
+  $('#sPer').textContent   = people > 0 ? '¥' + fmt(total / people) : '—';
+}
+
+function renderFront(){
+  renderCatTabs();
+  renderLib();
+  renderPicked();
+  renderStats();
+}
+
+function addPick(dish){
+  pushUndo();
+  const curColor = S.front.colorOverride || '';
+  S.front.picked.push({
+    _id: uid(),
+    name: dish.name, price: dish.price, cat: dish.cat, qty: 1,
+    color: curColor, temp: !!dish.temp, note: ''
+  });
+  mergeDuplicatePicked();
+  save(); renderPicked(); renderStats(); renderPaperSoon();
+}
+
+/* ============ 菜单存档（本地 + 云端双写） ============ */
+function loadSavedLocal(){
+  try{ return JSON.parse(localStorage.getItem(LS_SAVED) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveSavedLocal(o){
+  try{ localStorage.setItem(LS_SAVED, JSON.stringify(o)); }
+  catch(e){ console.warn('本地存档写入失败', e); }
+}
+
+async function loadSavedCloud(){
+  try{
+    const rows = await sbFetch('saved_menus?select=name,front,saved_at');
+    const out = {};
+    (rows || []).forEach(r => {
+      out[r.name] = { front: r.front, savedAt: r.saved_at || 0 };
+    });
+    return out;
+  }catch(e){
+    console.warn('云端存档读取失败', e);
+    return null;
+  }
+}
+
+async function loadSavedMenusAll(){
+  const local = loadSavedLocal();
+  const cloud = await loadSavedCloud();
+  if(cloud === null){
+    let cache = {};
+    try{ cache = JSON.parse(localStorage.getItem(LS_SAVED_CACHE) || '{}'); }
+    catch(e){ cache = {}; }
+    const merged = Object.assign({}, cache, local);
+    merged.__offline = true;
+    return merged;
+  }
+  try{ localStorage.setItem(LS_SAVED_CACHE, JSON.stringify(cloud)); }
+  catch(e){ console.warn('存档缓存写入失败', e); }
+  const merged = Object.assign({}, local, cloud);
+  merged.__offline = false;
+  return merged;
+}
+
+async function saveOneMenu(name, data){
+  const local = loadSavedLocal();
+  local[name] = data;
+  saveSavedLocal(local);
+  try{
+    await sbFetch('saved_menus', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ name: name, front: data.front, saved_at: data.savedAt })
+    });
+    return { ok: true, cloud: true };
+  }catch(e){
+    console.warn('云端保存失败', e);
+    return { ok: true, cloud: false };
+  }
+}
+
+async function deleteOneMenu(name){
+  const local = loadSavedLocal();
+  delete local[name];
+  saveSavedLocal(local);
+  try{
+    await sbFetch('saved_menus?name=eq.' + encodeURIComponent(name), { method: 'DELETE' });
+    return { ok: true, cloud: true };
+  }catch(e){
+    console.warn('云端删除失败', e);
+    return { ok: true, cloud: false };
+  }
+}
+
+function snapshotFront(){
+  const f = S.front;
+  return {
+    date: f.date || '', meal: f.meal || '晚宴',
+    mealOther: f.mealOther || '', guest: f.guest || '',
+    people: f.people || '', chef: f.chef || '',
+    picked: clone(f.picked || []),
+    svcOn: !!f.svcOn, svcRate: f.svcRate != null ? f.svcRate : 10,
+    colorOverride: f.colorOverride || '',
+    noteFull: f.noteFull || '', showNotes: f.showNotes !== false
+  };
+}
+function applySnapshot(front){
+  S.front.date = front.date || '';
+  S.front.meal = front.meal || '晚宴';
+  S.front.mealOther = front.mealOther || '';
+  S.front.guest = front.guest || '';
+  S.front.people = front.people || '';
+  S.front.chef = front.chef || '';
+  S.front.picked = clone(front.picked || []);
+  S.front.svcOn = !!front.svcOn;
+  S.front.svcRate = front.svcRate != null ? front.svcRate : 10;
+  S.front.colorOverride = front.colorOverride || '';
+  S.front.noteFull = front.noteFull || '';
+  S.front.showNotes = front.showNotes !== false;
+  ensureIds(S.front.picked);
+  mergeDuplicatePicked();
+  SELECTED.clear();
+}
+
+async function renderSavedList(){
+  const box = $('#savedList');
+  box.innerHTML = '<div class="hint" style="text-align:center;padding:8px 0">加载中…</div>';
+  const menus = await loadSavedMenusAll();
+  const offline = !!menus.__offline;
+  delete menus.__offline;
+  const names = Object.keys(menus);
+  const statusHtml = offline
+    ? '<div class="hint" style="text-align:center;padding:4px 0 8px;color:#e67e22">📴 离线模式 · 显示上次同步的存档</div>'
+    : '<div class="hint" style="text-align:center;padding:4px 0 8px;color:#4caf50">☁️ 已同步云端</div>';
+  if(!names.length){
+    box.innerHTML = statusHtml +
+      '<div class="hint" style="text-align:center;padding:8px 0">还没有存档</div>';
+    return;
+  }
+  box.innerHTML = statusHtml;
+  names.sort((a, b) => (menus[b].savedAt || 0) - (menus[a].savedAt || 0));
+  names.forEach(n => {
+    const row = document.createElement('div');
+    row.className = 'saved-row';
+    row.innerHTML =
+      '<span class="sname" title="' + esc(n) + '">' + esc(n) + '</span>' +
+      '<button class="btn tiny" data-a="apply">应用</button>' +
+      '<button class="btn tiny del" data-a="del" style="color:#c9ccd3">✕</button>';
+    row.querySelector('[data-a=apply]').addEventListener('click', () => {
+      if(!confirm('将覆盖当前菜单（已选菜品、菜单信息、服务费），继续？')) return;
+      pushUndo();
+      applySnapshot(menus[n].front);
+      save(); syncInputs(); renderFront(); renderPaperSoon();
+    });
+    row.querySelector('[data-a=del]').addEventListener('click', async () => {
+      if(!confirm('删除存档「' + n + '」？\n（本地和云端都会删除）')) return;
+      const r = await deleteOneMenu(n);
+      if(!r.cloud) toast('本地已删，云端删除失败');
+      renderSavedList();
+    });
+    box.appendChild(row);
+  });
+}
+
+/* ============ 输入同步 ============ */
+function syncInputs(){
+  $('#fDate').value = S.front.date || '';
+  $('#fMeal').value = S.front.meal || '晚宴';
+  $('#fMealOther').value = S.front.mealOther || '';
+  $('#fMealOtherWrap').style.display = S.front.meal === '其他' ? '' : 'none';
+  $('#fGuest').value = S.front.guest || '';
+  $('#fPeople').value = S.front.people || '';
+  $('#fChef').value = S.front.chef || '';
+  $('#fNoteFull').value = S.front.noteFull || '';
+  $('#showNotesOn').checked = S.front.showNotes !== false;
+  $('#svcOn').checked = !!S.front.svcOn;
+  $('#svcRate').value = S.front.svcRate != null ? S.front.svcRate : 10;
+  $('#showPriceOn').checked = !!S.layout.showPrice;
+  $('#showUnitOn').checked = !!S.layout.showUnit;
+  $('#fSplitAt').value = S.layout.splitAt != null ? S.layout.splitAt : 6;
+}
+
+/* ============ 导出PNG / 分享 ============ */
+async function renderPaperCanvas(){
+  if(typeof html2canvas === 'undefined'){
+    alert('导出 PNG 需要 html2canvas 库，请检查本地文件是否存在。');
+    return null;
+  }
+  if(document.fonts && document.fonts.ready){
+    try{ await document.fonts.ready; }catch(e){}
+    await new Promise(r => setTimeout(r, 300));
+  }
+  const paper = $('#paper');
+  if(!paper) return null;
+  const scaler = $('#paperScaler');
+  const oldTransform = scaler.style.transform;
+  const oldWidth = scaler.style.width;
+  const oldHeight = scaler.style.height;
+  scaler.style.transform = 'none';
+  scaler.style.width = 'auto';
+  scaler.style.height = 'auto';
+  let canvas = null;
+  try{
+    canvas = await html2canvas(paper, {
+      scale: 2, useCORS: true, allowTaint: false,
+      backgroundColor: null, logging: false
+    });
+  }catch(err){
+    console.error(err);
+    alert('导出失败：' + err.message);
+  }finally{
+    scaler.style.transform = oldTransform;
+    scaler.style.width = oldWidth;
+    scaler.style.height = oldHeight;
+  }
+  return canvas;
+}
+function canvasToBlob(canvas){
+  return new Promise(res => canvas.toBlob(b => res(b), 'image/png'));
+}
+function isMobileUA(){
+  return /Mobi|Android|iPhone|iPad|iPod|HarmonyOS|MicroMessenger/i.test(navigator.userAgent)
+    || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+}
+function downloadBlob(blob, fileName){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function showExportResult(blob, fileName){
+  if(_exportUrl){ URL.revokeObjectURL(_exportUrl); _exportUrl = null; }
+  const url = URL.createObjectURL(blob);
+  _exportUrl = url;
+  const mob = isMobileUA();
+  showMask(
+    '<h3>导出图片</h3>' +
+    '<div style="text-align:center;background:#f2f3f5;border-radius:8px;padding:8px;margin-bottom:12px">' +
+      '<img src="' + url + '" style="max-width:100%;max-height:46vh;display:block;margin:0 auto;border-radius:4px">' +
+    '</div>' +
+    (mob ? '<div class="hint" style="text-align:center;margin-bottom:12px">长按图片即可保存到相册</div>' : '') +
+    '<div class="row-btns" style="justify-content:center">' +
+      '<button class="btn" id="__expDl">下载图片</button>' +
+      (mob ? '<button class="btn primary" id="__expShare">分享</button>' : '') +
+      '<button class="btn" id="__expClose">关闭</button>' +
+    '</div>'
+  );
+  $('#__expDl').onclick = () => downloadBlob(blob, fileName);
+  const sh = $('#__expShare');
+  if(sh) sh.onclick = async () => {
+    try{
+      const file = new File([blob], fileName, { type: 'image/png' });
+      if(navigator.canShare && navigator.canShare({ files: [file] })){
+        await navigator.share({ files: [file], title: '宴席菜单' });
+        return;
+      }
+    }catch(err){ if(err && err.name === 'AbortError') return; }
+    toast('当前浏览器不支持直接分享，请长按图片保存');
+  };
+  $('#__expClose').onclick = () => hideMask();
+}
+
+/* ============ 事件绑定 ============ */
+$$('.tabs button[data-view]').forEach(b =>
+  b.addEventListener('click', () => switchView(b.dataset.view)));
+
+$('#btnBackToOrder').addEventListener('click', () => switchView('order'));
+$('#btnUndo').addEventListener('click', doUndo);
+
+$('#btnCheckUpdate').addEventListener('click', async () => {
+  const btn = $('#btnCheckUpdate');
+  if(btn.dataset.busy === '1') return;
+  btn.dataset.busy = '1';
+  const old = btn.textContent;
+  btn.textContent = '⏳';
+  btn.disabled = true;
+  try{ await pullFromCloud(true); }
+  finally{
+    btn.textContent = old;
+    btn.disabled = false;
+    btn.dataset.busy = '0';
+    btn.classList.remove('hasNew');
+  }
+});
+
+/* 全局全屏（横屏需手动旋转，见说明） */
+$('#btnFullscreen').addEventListener('click', async () => {
+  const el = document.documentElement;
+  try{
+    if(!document.fullscreenElement && !document.webkitFullscreenElement){
+      if(el.requestFullscreen) await el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+      else { toast('当前浏览器不支持全屏，请手动旋转手机'); return; }
+      if(screen.orientation && screen.orientation.lock){
+        try{ await screen.orientation.lock('landscape'); }catch(e){}
+      }
+      toast('已进入全屏\n请手动旋转手机为横屏');
+    }else{
+      if(document.exitFullscreen) await document.exitFullscreen();
+      else if(document.webkitExitFullscreen) await document.webkitExitFullscreen();
+    }
+  }catch(e){
+    toast('无法进入全屏，请手动旋转手机');
+  }
+  setTimeout(fitPaper, 400);
+});
+
+/* 临时菜 */
+$('#btnTempDish').addEventListener('click', () => {
+  const fixedCats = CATS.filter(c => c !== '位菜');
+  const catOpts = fixedCats.map(c =>
+    '<option value="' + c + '">' + c + '</option>').join('');
+  showMask(
+    '<h3>添加临时菜</h3>' +
+    '<input id="__tdName" placeholder="菜名" autocomplete="off">' +
+    '<input id="__tdPrice" type="number" placeholder="价格" step="0.01">' +
+    '<input id="__tdQty" type="number" placeholder="份数" step="0.5" value="1" min="0.5">' +
+    '<select id="__tdCat">' + catOpts + '</select>' +
+    '<div class="row-btns">' +
+    '<button class="btn" id="__tdCancel">取消</button>' +
+    '<button class="btn primary" id="__tdOk">添加</button></div>'
+  );
+  setTimeout(() => $('#__tdName').focus(), 50);
+  function close(){ hideMask(); }
+  $('#__tdCancel').onclick = close;
+  $('#__tdOk').onclick = () => {
+    const name = ($('#__tdName').value || '').trim();
+    const price = parseFloat($('#__tdPrice').value) || 0;
+    const qty = Math.max(0.5, Math.round((parseFloat($('#__tdQty').value) || 1) * 10) / 10);
+    const cat = $('#__tdCat').value || '热菜';
+    if(!name){ alert('请输入菜名'); return; }
+    if(!CATS.includes(cat)){ alert('类目无效'); return; }
+    pushUndo();
+    S.front.picked.push({
+      _id: uid(),
+      name, price, cat, qty,
+      color: S.front.colorOverride || '',
+      temp: true, note: ''
+    });
+    mergeDuplicatePicked();
+    save(); renderPicked(); renderStats(); renderPaperSoon();
+    close();
+    toast('已添加临时菜「' + name + '」');
+  };
+});
+
+/* 保存菜单存档 */
+$('#btnSaveMenu').addEventListener('click', async () => {
+  const name = ($('#savedName').value || '').trim();
+  if(!name){ alert('请输入存档名称'); $('#savedName').focus(); return; }
+  if(!S.front.picked.length){ alert('当前还没有选菜，无需保存'); return; }
+  const menus = await loadSavedMenusAll();
+  delete menus.__offline;
+  if(menus[name] && !confirm('已有同名存档「' + name + '」，是否覆盖？')) return;
+  const data = { front: snapshotFront(), savedAt: Date.now() };
+  const r = await saveOneMenu(name, data);
+  $('#savedName').value = '';
+  renderSavedList();
+  toast(r.cloud
+    ? '已保存存档「' + name + '」\n（本地 + 云端）'
+    : '已保存到本地\n（云端同步失败）');
+});
+
+/* 已选菜品交互（点击选中 + 数量增减 + 删除） */
+$('#pickedList').addEventListener('click', function(e){
+  const btn = e.target.closest('[data-act]');
+  if(btn){
+    if(btn.tagName === 'INPUT') return;
+    const row = btn.closest('.picked-item'), i = +row.dataset.i, it = S.front.picked[i];
+    if(!it) return;
+    const act = btn.dataset.act;
+    if(act === 'inc') it.qty = Math.round((it.qty + 0.5) * 10) / 10;
+    else if(act === 'dec'){
+      it.qty = Math.round((it.qty - 0.5) * 10) / 10;
+      if(it.qty < 0.5) S.front.picked.splice(i, 1);
+    }
+    else if(act === 'del') S.front.picked.splice(i, 1);
+    save(); renderPicked(); renderStats(); renderPaperSoon();
+    return;
+  }
+  // 点击行 → 切换选中（直接切 class，不重建列表，避免抖动）
+  if(e.target.closest('.grip') || e.target.closest('.qty-input')) return;
+  const row = e.target.closest('.picked-item');
+  if(!row) return;
+  const i = +row.dataset.i, it = S.front.picked[i];
+  if(!it) return;
+  if(SELECTED.has(it._id)) SELECTED.delete(it._id);
+  else SELECTED.add(it._id);
+  row.classList.toggle('selected', SELECTED.has(it._id));
+});
+
+$('#pickedList').addEventListener('input', function(e){
+  const inp = e.target.closest('.qty-input');
+  if(!inp) return;
+  const row = inp.closest('.picked-item'), i = +row.dataset.i, it = S.front.picked[i];
+  if(!it) return;
+  const raw = inp.value.trim();
+  if(raw === '' || raw === '-' || raw === '.') return;
+  const v = parseFloat(raw);
+  if(isNaN(v) || v <= 0) return;
+  it.qty = Math.round(v * 10) / 10;
+  save();
+  renderPaperSoon();
+  const priceEl = row.querySelector('.pi-price');
+  if(priceEl) priceEl.textContent = '¥' + fmt(it.price * it.qty);
+});
+
+$('#pickedList').addEventListener('change', function(e){
+  const inp = e.target.closest('.qty-input');
+  if(!inp) return;
+  const row = inp.closest('.picked-item'), i = +row.dataset.i, it = S.front.picked[i];
+  if(!it) return;
+  let v = parseFloat(inp.value);
+  if(isNaN(v) || v < 0.5) S.front.picked.splice(i, 1);
+  else it.qty = Math.round(v * 10) / 10;
+  save(); renderPicked(); renderStats(); renderPaperSoon();
+});
+
+/* 拖拽排序 */
+let dragState = null;
+const pickBox = $('#pickedList');
+function onDragMove(e){
+  if(!dragState) return;
+  e.preventDefault();
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const over = el && el.closest ? el.closest('.picked-item') : null;
+  pickBox.querySelectorAll('.over').forEach(x => x.classList.remove('over'));
+  if(over && over !== dragState.row){
+    const it = S.front.picked[+over.dataset.i];
+    if(it && it.cat === dragState.cat) over.classList.add('over');
+  }
+}
+function onDragUp(e){
+  if(!dragState) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const overEl = el && el.closest ? el.closest('.picked-item') : null;
+  const row = dragState.row, from = dragState.from, cat = dragState.cat;
+  row.classList.remove('dragging');
+  pickBox.querySelectorAll('.over').forEach(x => x.classList.remove('over'));
+  document.removeEventListener('pointermove', onDragMove);
+  document.removeEventListener('pointerup', onDragUp);
+  document.removeEventListener('pointercancel', onDragUp);
+  document.body.classList.remove('dragging');
+  dragState = null;
+  if(!overEl) return;
+  const to = +overEl.dataset.i;
+  if(isNaN(to) || to === from) return;
+  const target = S.front.picked[to];
+  if(!target || target.cat !== cat){ toast('只能在同一类目内调整顺序'); return; }
+  pushUndo();
+  const moved = S.front.picked.splice(from, 1)[0];
+  S.front.picked.splice(to, 0, moved);
+  save(); renderPicked(); renderPaperSoon();
+}
+pickBox.addEventListener('pointerdown', e => {
+  const grip = e.target.closest('.grip');
+  if(!grip) return;
+  const row = grip.closest('.picked-item');
+  if(!row) return;
+  e.preventDefault();
+  const from = +row.dataset.i;
+  const it = S.front.picked[from];
+  if(!it) return;
+  dragState = { from, row, cat: it.cat };
+  row.classList.add('dragging');
+  document.body.classList.add('dragging');
+  document.addEventListener('pointermove', onDragMove);
+  document.addEventListener('pointerup', onDragUp);
+  document.addEventListener('pointercancel', onDragUp);
+});
+
+/* 搜索 & 菜单信息 */
+$('#libSearch').addEventListener('input', renderLib);
+$('#fDate').addEventListener('change', e => { S.front.date = e.target.value; save(); renderPaperSoon(); });
+$('#fMeal').addEventListener('change', e => {
+  S.front.meal = e.target.value;
+  $('#fMealOtherWrap').style.display = e.target.value === '其他' ? '' : 'none';
+  save(); renderPaperSoon();
+});
+$('#fMealOther').addEventListener('input', e => { S.front.mealOther = e.target.value; save(); renderPaperSoon(); });
+$('#fGuest').addEventListener('input', e => { S.front.guest = e.target.value; save(); renderPaperSoon(); });
+$('#fPeople').addEventListener('input', e => {
+  S.front.people = Math.max(0, parseInt(e.target.value, 10) || 0);
+  save(); renderStats(); renderPaperSoon();
+});
+$('#fChef').addEventListener('input', e => { S.front.chef = e.target.value; save(); renderPaperSoon(); });
+$('#fNoteFull').addEventListener('input', e => {
+  S.front.noteFull = e.target.value;
+  save(); renderPaperSoon();
+});
+$('#showNotesOn').addEventListener('change', e => {
+  S.front.showNotes = e.target.checked;
+  save(); renderPaperSoon();
+});
+$('#svcOn').addEventListener('change', e => { S.front.svcOn = e.target.checked; save(); renderStats(); renderPaperSoon(); });
+$('#svcRate').addEventListener('input', e => { S.front.svcRate = parseFloat(e.target.value) || 0; save(); renderStats(); renderPaperSoon(); });
+$('#showPriceOn').addEventListener('change', e => { S.layout.showPrice = e.target.checked; save(); renderPaperSoon(); });
+$('#showUnitOn').addEventListener('change', e => { S.layout.showUnit = e.target.checked; save(); renderPaperSoon(); });
+$('#fSplitAt').addEventListener('input', e => {
+  let v = parseInt(e.target.value, 10);
+  if(isNaN(v)) return;
+  v = Math.max(2, Math.min(30, v));
+  S.layout.splitAt = v;
+  save(); renderPaperSoon();
+});
+
+/* ====== 调色逻辑（全部 / 单个选中），操作后清空选中 ====== */
+$('#chkAllColor').addEventListener('change', () => {
+  $('#chkAllWrap').classList.toggle('on', $('#chkAllColor').checked);
+});
+
+function applyColor(colorName){
+  const color = COLORS[colorName];
+  if(color === undefined) return;
+  if(!S.front.picked.length){ toast('还没有选菜'); return; }
+  const allMode = $('#chkAllColor').checked;
+
+  if(allMode){
+    pushUndo();
+    S.front.colorOverride = color;
+    S.front.picked.forEach(it => { it.color = color; });
+    mergeDuplicatePicked();
+    SELECTED.clear();
+    save(); renderPicked(); renderStats(); renderPaperSoon();
+    toast('全部已改为「' + COLOR_NAMES[colorName] + '」色');
+  }else{
+    if(!SELECTED.size){ toast('请先点击选中菜品，或勾选「全部」'); return; }
+    pushUndo();
+    let n = 0;
+    S.front.picked.forEach(it => {
+      if(SELECTED.has(it._id)){ it.color = color; n++; }
+    });
+    mergeDuplicatePicked();
+    SELECTED.clear();
+    save(); renderPicked(); renderStats(); renderPaperSoon();
+    toast('已为选中的 ' + n + ' 道菜品改色');
+  }
+}
+$$('.color-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyColor(btn.dataset.color));
+});
+
+/* ====== 备注按钮：支持单个 / 多个选中批量备注，操作后清空选中 ====== */
+$('#btnNoteSel').addEventListener('click', () => {
+  if(!S.front.picked.length){ toast('还没有选菜'); return; }
+  if(!SELECTED.size){ toast('请先点击选中菜品'); return; }
+
+  const items = S.front.picked.filter(x => SELECTED.has(x._id));
+  if(!items.length){ toast('未找到选中的菜品'); return; }
+
+  const multi = items.length > 1;
+  const oldNote = multi ? '' : (items[0].note || '');
+  const title = multi
+    ? '批量备注（' + items.length + ' 道菜）'
+    : '菜品备注：' + esc(items[0].name);
+  const placeholder = multi
+    ? '输入备注，将应用到所有选中菜品（留空可清除）'
+    : '如：免葱、少辣';
+
+  showMask(
+    '<h3>' + title + '</h3>' +
+    '<input id="__tdNote" value="' + esc(oldNote) + '" placeholder="' + placeholder + '">' +
+    '<div class="row-btns">' +
+      '<button class="btn" id="__tdNCancel">取消</button>' +
+      '<button class="btn primary" id="__tdNOk">确定</button>' +
+    '</div>'
+  );
+  setTimeout(() => $('#__tdNote').focus(), 50);
+  $('#__tdNCancel').onclick = hideMask;
+  $('#__tdNOk').onclick = () => {
+    const note = $('#__tdNote').value.trim();
+    pushUndo();
+    items.forEach(it => { it.note = note; });
+    hideMask();
+    SELECTED.clear();
+    save(); renderPicked(); renderStats(); renderPaperSoon();
+  };
+});
+
+/* ====== 上移 / 下移（同分类内移动一位，操作后保持选中） ====== */
+function moveSelected(dir){
+  if(!S.front.picked.length){ toast('还没有选菜'); return; }
+  if(!SELECTED.size){ toast('请先点击选中菜品'); return; }
+  const arr = S.front.picked;
+  const sel = arr.map((it, i) => ({ it, i }))
+                 .filter(x => SELECTED.has(x.it._id));
+  sel.sort((a, b) => dir < 0 ? a.i - b.i : b.i - a.i);
+
+  let canMove = false;
+  sel.forEach(({ it }) => {
+    const cur = arr.indexOf(it);
+    let j = cur + dir;
+    while(j >= 0 && j < arr.length && arr[j].cat !== it.cat) j += dir;
+    if(j >= 0 && j < arr.length) canMove = true;
+  });
+  if(!canMove){ toast(dir < 0 ? '已经到最前了' : '已经到最后了'); return; }
+
+  pushUndo();
+  sel.forEach(({ it }) => {
+    const cur = arr.indexOf(it);
+    if(cur < 0) return;
+    let j = cur + dir;
+    while(j >= 0 && j < arr.length && arr[j].cat !== it.cat) j += dir;
+    if(j < 0 || j >= arr.length) return;
+    arr.splice(cur, 1);
+    arr.splice(j, 0, it);
+  });
+  save(); renderPicked(); renderPaperSoon();
+}
+$('#btnMoveUp').addEventListener('click', () => moveSelected(-1));
+$('#btnMoveDown').addEventListener('click', () => moveSelected(1));
+
+/* 清空已选 */
+$('#btnClearPicked').addEventListener('click', () => {
+  if(!S.front.picked.length) return;
+  if(!confirm('清空已选菜品？')) return;
+  pushUndo();
+  S.front.picked = [];
+  S.front.colorOverride = '';
+  SELECTED.clear();
+  save(); renderPicked(); renderStats(); renderPaperSoon();
+});
+
+/* 打印 / 导出 / 分享 */
+$('#btnPrint').addEventListener('click', () => { window.print(); });
+$('#btnExportPng').addEventListener('click', async () => {
+  const btn = $('#btnExportPng');
+  const old = btn.textContent;
+  btn.textContent = '⏳ 导出中…'; btn.disabled = true;
+  try{
+    const canvas = await renderPaperCanvas();
+    if(!canvas) return;
+    const blob = await canvasToBlob(canvas);
+    if(!blob){ alert('导出失败，请重试。'); return; }
+    showExportResult(blob, '宴席菜单-' + todayStr() + '.png');
+  }finally{
+    btn.textContent = old; btn.disabled = false;
+  }
+});
+$('#btnShare').addEventListener('click', async () => {
+  const btn = $('#btnShare');
+  const old = btn.textContent;
+  btn.textContent = '⏳ 生成中…'; btn.disabled = true;
+  try{
+    const canvas = await renderPaperCanvas();
+    if(!canvas) return;
+    const blob = await canvasToBlob(canvas);
+    if(!blob){ alert('生成失败，请重试。'); return; }
+    showExportResult(blob, '宴席菜单-' + todayStr() + '.png');
+  }finally{
+    btn.textContent = old; btn.disabled = false;
+  }
+});
+
+/* ============ 初始化 ============ */
+let _resizeT = 0;
+function init(){
+  applyUiFont();
+  syncInputs();
+  renderFront();
+  renderPaper();
+  renderSavedList();
+  window.addEventListener('resize', () => {
+    clearTimeout(_resizeT);
+    _resizeT = setTimeout(() => {
+      if($('#view-preview').classList.contains('active')) fitPaper();
+    }, 120);
+  });
+  setTimeout(autoCheckUpdate, 800);
+}
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', init);
+}else{
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
