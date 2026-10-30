@@ -2,14 +2,14 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>宴席排菜单 - 前台</title>
 <script src="html2canvas.min.js"></script>
 <style>
 @font-face{
   font-family:'LXGW Wen Kai';
-  src:url('fonts/LXGWWenKai-Regular.woff2') format('woff2'),
-      url('fonts/LXGWWenKai-Regular.ttf') format('truetype');
+  /* 建议使用 woff2，若只有 ttf 请保留此格式 */
+  src:url('fonts/LXGWWenKai-Regular.ttf') format('truetype');
   font-weight:400;font-style:normal;font-display:swap;
 }
 :root{
@@ -20,98 +20,95 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{font-family:var(--ui-font);background:var(--bg);color:var(--text);
-  font-size:14px;line-height:1.4;overscroll-behavior-y:contain}
+  font-size:15px;line-height:1.4;overscroll-behavior-y:contain}
 .topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px;
-  padding:8px 14px;background:linear-gradient(135deg,#7c1616,#a52a2a);color:#fff;
+  padding:8px 12px;background:linear-gradient(135deg,#7c1616,#a52a2a);color:#fff;
   box-shadow:0 2px 8px rgba(0,0,0,.15);flex-wrap:wrap}
-.brand{font-weight:700;font-size:15px;letter-spacing:1px}
+.brand{font-weight:700;font-size:16px;letter-spacing:1px}
 .tabs{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap;align-items:center}
 .tabs button{background:rgba(255,255,255,.15);border:0;color:#fff;padding:6px 12px;
-  border-radius:999px;cursor:pointer;font-size:12.5px;font-family:inherit;position:relative;
+  border-radius:999px;cursor:pointer;font-size:14px;font-family:inherit;position:relative;
   touch-action:manipulation}
 .tabs button:hover{background:rgba(255,255,255,.28)}
 .tabs button.active{background:#fff;color:var(--brand);font-weight:600}
 .tabs .count{display:inline-flex;align-items:center;justify-content:center;
   width:26px;height:18px;margin-left:4px;border-radius:999px;
-  background:rgba(255,255,255,.28);font-size:11.5px;font-weight:600;
+  background:rgba(255,255,255,.28);font-size:12px;font-weight:600;
   vertical-align:1px}
 .tabs button.active .count{background:var(--brand);color:#fff}
 #btnCheckUpdate,#btnFullscreen{background:rgba(255,255,255,.18);border:0;color:#fff;
-  font-size:15px;cursor:pointer;padding:5px 9px;border-radius:999px;
+  font-size:16px;cursor:pointer;padding:5px 9px;border-radius:999px;
   transition:.2s;margin-left:4px;touch-action:manipulation}
 #btnCheckUpdate:hover,#btnFullscreen:hover{background:rgba(255,255,255,.3)}
 #btnCheckUpdate.hasNew{background:#ffd76a;color:#8a6d00}
-.save-hint{font-size:11.5px;color:rgba(255,255,255,.85);padding:3px 9px;
-  border-radius:999px;background:rgba(0,0,0,.15);transition:.3s}
-.save-hint.flash{background:#4caf50;color:#fff}
-main{padding:10px;max-width:1500px;margin:0 auto}
+main{padding:8px;max-width:800px;margin:0 auto} /* 手机端只占满屏 */
 .view{display:none}.view.active{display:block}
-.card{background:var(--card);border-radius:var(--radius);padding:10px 13px;
+.card{background:var(--card);border-radius:var(--radius);padding:12px;
   box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:9px}
-.card h3{margin:0 0 7px;font-size:12.5px;color:var(--brand);font-weight:700}
+.card h3{margin:0 0 10px;font-size:16px;color:var(--brand);font-weight:700}
+
 label.fld{display:flex;align-items:center;justify-content:space-between;gap:8px;
-  margin-bottom:4px;font-size:12.5px;color:#555;min-height:26px}
+  margin-bottom:6px;font-size:16px;color:#333;min-height:32px}
 label.fld:last-child{margin-bottom:0}
 label.fld input,label.fld select{padding:4px 8px;border:1px solid var(--line);
-  border-radius:6px;font-size:12.5px;font-family:inherit;color:var(--text);
-  background:#fafbfc;flex:1;max-width:170px;min-width:0;height:26px}
+  border-radius:6px;font-size:16px;font-family:inherit;color:var(--text);
+  background:#fafbfc;flex:1;max-width:200px;min-width:0;height:34px}
 label.fld input:focus,label.fld select:focus{
   outline:2px solid rgba(140,28,28,.18);border-color:var(--brand2)}
-input[type=range]{flex:1;max-width:130px;accent-color:var(--brand2)}
-label.chk{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:12.5px;
-  color:#555;cursor:pointer;user-select:none;min-height:22px;touch-action:manipulation}
-label.chk input{width:15px;height:15px;accent-color:var(--brand2);cursor:pointer}
-.btn{padding:6px 11px;border-radius:7px;border:1px solid var(--line);background:#fff;
-  cursor:pointer;font-size:12.5px;font-family:inherit;color:var(--text);touch-action:manipulation}
+
+label.chk{display:flex;align-items:center;gap:6px;font-size:16px;
+  color:#333;cursor:pointer;user-select:none;touch-action:manipulation;margin:0}
+label.chk input{width:18px;height:18px;accent-color:var(--brand2);cursor:pointer}
+
+.btn{padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:#fff;
+  cursor:pointer;font-size:16px;font-family:inherit;color:var(--text);touch-action:manipulation}
 .btn:hover{border-color:var(--brand2);color:var(--brand2)}
 .btn.primary{background:linear-gradient(135deg,#a52a2a,#c0392b);color:#fff;border:0;font-weight:600}
 .btn.primary:hover{opacity:.9;color:#fff}
-.btn.block{width:100%;padding:10px;font-size:14px}
-.btn.tiny{padding:3px 8px;font-size:11.5px;border-radius:6px}
+.btn.block{width:100%;padding:12px;font-size:16px}
+.btn.tiny{padding:5px 10px;font-size:14px;border-radius:6px}
 .btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
 
-/* 点菜页三栏布局 */
-.order-grid{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,4fr) minmax(0,2fr);
-  gap:9px;align-items:start}
-@media(max-width:1100px){ .order-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);} }
-@media(max-width:700px){ .order-grid{grid-template-columns:1fr;} }
-
-/* 大字号（点菜/已选页） */
-#view-order .card h3, #view-picked .card h3{ font-size:20px; }
-#view-order label.fld, #view-order label.chk{ font-size:18px; }
-#view-order label.fld input, #view-order label.fld select{ font-size:19px; height:36px; padding:6px 10px; }
-#view-order .btn, #view-picked .btn{ padding:9px 16px; font-size:18px; }
-#view-order .btn.tiny, #view-picked .btn.tiny{ font-size:15px; padding:5px 11px; }
-#view-order .search-row input{ padding:10px 13px; height:40px; font-size:18px; }
-
-.cat-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
-.cat-tabs button{font-size:19px;padding:6px 16px;border-radius:999px;
+/* 点菜页纯单列布局 */
+.cat-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.cat-tabs button{font-size:16px;padding:6px 14px;border-radius:999px;
   border:1px solid var(--line);background:#fff;cursor:pointer;font-family:inherit;color:#555;
   touch-action:manipulation}
 .cat-tabs button:hover{border-color:var(--brand2);color:var(--brand2)}
 .cat-tabs button.active{background:linear-gradient(135deg,#a52a2a,#c0392b);
   color:#fff;border:0;font-weight:600}
-.dish-lib{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-@media(max-width:1100px){ .dish-lib{grid-template-columns:repeat(3,1fr);} }
-@media(max-width:700px){ .dish-lib{grid-template-columns:repeat(2,1fr);} }
+.dish-lib{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .lib-item{display:flex;justify-content:space-between;align-items:center;gap:6px;
   border:1px solid var(--line);cursor:pointer;background:#fff;user-select:none;
-  overflow:hidden;font-size:18px;padding:10px 12px;border-radius:8px;
+  overflow:hidden;font-size:16px;padding:12px 10px;border-radius:8px;
   touch-action:manipulation;-webkit-touch-callout:none}
 .lib-item:hover{border-color:var(--brand2);background:#fff7f5}
 .lib-item:active{transform:scale(.97)}
-.lib-item .p{color:var(--brand2);font-weight:600;white-space:nowrap;font-size:16px}
+.lib-item .p{color:var(--brand2);font-weight:600;white-space:nowrap;font-size:15px}
 .lib-item > span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-row{display:flex;gap:8px;margin-top:10px}
+.search-row input{flex:1;border:1px solid var(--line);font-family:inherit;border-radius:9px;
+  padding:10px 12px;height:40px;font-size:16px}
 
-.search-row{display:flex;gap:8px;margin-top:9px}
-.search-row input{flex:1;border:1px solid var(--line);font-family:inherit;border-radius:9px}
+/* 服务费 / 统计卡片紧凑排版 */
+.compact-stats-card { padding: 12px !important; }
+.stat-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+.stat-row:last-child{ margin-bottom:0; }
+.stat-row label { display:flex; align-items:center; gap:4px; font-size:15px; color:#333; white-space:nowrap; margin:0; }
+.stat-row input[type=number]{ width:60px; height:32px; border:1px solid var(--line); border-radius:6px; text-align:center; padding:0 4px; font-size:16px; font-family:inherit; }
+.stat-row .input-text{ flex:1; border:1px solid var(--line); border-radius:6px; height:34px; padding:0 10px; font-size:15px; min-width: 120px; font-family:inherit; }
+.stat-row b{ color:var(--brand2); font-size:18px; font-weight:700; }
+
+.amount-row{ justify-content:space-around !important; border-top:1px dashed var(--line); padding-top:10px; margin-top:10px; }
+.amount-row > div{ text-align:center; flex:1; }
+.amount-row span{ font-size:13px; color:var(--sub); display:block; margin-bottom:2px; }
+.amount-row b{ font-size:18px; }
 
 /* 已选菜品列表 */
-#view-picked .card{max-width:920px;margin:0 auto}
-.picked-list{display:flex;flex-direction:column;max-height:calc(100vh - 280px);overflow:auto;
-  -webkit-overflow-scrolling:touch}
+.picked-list{display:flex;flex-direction:column;max-height:calc(100vh - 380px);overflow:auto;
+  -webkit-overflow-scrolling:touch;margin-bottom:10px}
 .picked-item{display:flex;align-items:center;border-bottom:1px dashed var(--line);
-  cursor:pointer;font-size:18px;padding:4px 4px;gap:2px;
+  cursor:pointer;font-size:16px;padding:8px 4px;gap:4px;
   transition:background .12s;border-radius:6px;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .picked-item:last-child{border-bottom:0}
@@ -120,7 +117,7 @@ label.chk input{width:15px;height:15px;accent-color:var(--brand2);cursor:pointer
 .picked-item.over{box-shadow:inset 0 3px 0 var(--brand2)}
 .grip{color:#b0b5bd;font-size:24px;touch-action:none;cursor:grab;
   display:flex;align-items:center;justify-content:center;
-  width:44px;height:44px;flex:0 0 auto;
+  width:40px;height:44px;flex:0 0 auto;
   padding:0;user-select:none;-webkit-user-select:none;
   border-radius:8px;transition:background .12s,color .12s}
 .grip:active{background:#f0f1f3;color:var(--brand2)}
@@ -130,50 +127,42 @@ body.dragging, body.dragging *{
   -webkit-touch-callout:none!important;
 }
 .pi-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.pi-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:18px}
-.pi-cat{color:var(--sub);font-size:15px;margin-left:6px}
+.pi-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}
+.pi-cat{color:var(--sub);font-size:14px;margin-left:6px}
 .pi-note{font-size:13px;color:#b5654e;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;line-height:1.25}
-.qty{display:flex;align-items:center;gap:3px}
+.qty{display:flex;align-items:center;gap:2px}
 .qty button{width:28px;height:28px;font-size:18px;border-radius:6px;
   border:1px solid var(--line);background:#fff;cursor:pointer;color:#555;padding:0;line-height:1;
   touch-action:manipulation}
 .qty button:hover{border-color:var(--brand2);color:var(--brand2)}
-.qty-input{width:46px;height:28px;font-size:18px;text-align:center;
+.qty-input{width:40px;height:28px;font-size:16px;text-align:center;
   border:1px solid var(--line);border-radius:6px;background:#fafbfc;
-  font-family:inherit;color:var(--text);padding:0 4px}
+  font-family:inherit;color:var(--text);padding:0 2px}
 .qty-input:focus{outline:2px solid rgba(140,28,28,.18);border-color:var(--brand2)}
-.pi-price{color:var(--brand2);font-weight:600;text-align:right;font-size:18px;min-width:60px}
-.del{border:0;background:transparent;color:#c9ccd3;cursor:pointer;font-size:20px;padding:3px 8px;
+.pi-price{color:var(--brand2);font-weight:600;text-align:right;font-size:16px;min-width:55px}
+.del{border:0;background:transparent;color:#c9ccd3;cursor:pointer;font-size:20px;padding:0 6px;
   touch-action:manipulation}
 .del:hover{color:#e74c3c}
-.empty{color:var(--sub);text-align:center;padding:14px 0;font-size:19px}
+.empty{color:var(--sub);text-align:center;padding:20px 0;font-size:16px}
 
 /* 已选页底部工具栏 */
 .picked-toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;
-  margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
-.picked-toolbar .chk-all{display:flex;align-items:center;gap:5px;
+  margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.picked-toolbar .chk-all{display:flex;align-items:center;gap:4px;
   padding:6px 12px;border:1px solid var(--line);border-radius:999px;
-  font-size:15px;cursor:pointer;user-select:none;background:#fff;touch-action:manipulation}
+  font-size:14px;cursor:pointer;user-select:none;background:#fff;touch-action:manipulation}
 .picked-toolbar .chk-all input{width:16px;height:16px;accent-color:var(--brand2);cursor:pointer}
 .picked-toolbar .chk-all.on{background:#fff4f2;border-color:var(--brand2)}
 .picked-toolbar .color-btn{background:#fff}
 .picked-toolbar .spacer{flex:1}
 
-.stat-card{text-align:center}
-.stat{flex:1;min-width:0;padding:0 3px;border-right:1px dashed var(--line)}
-.stat:last-child{border-right:0}
-.stat span{display:block;color:var(--sub);margin-bottom:2px;font-size:13px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stat b{color:var(--brand2);white-space:nowrap;font-size:19px}
-
-.saved-list{display:flex;flex-direction:column;gap:6px;margin-top:9px;
+.saved-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;
   max-height:260px;overflow:auto}
-.saved-row{display:flex;align-items:center;gap:7px;padding:8px 9px;
-  border:1px solid var(--line);border-radius:7px;font-size:18px}
+.saved-row{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--line);border-radius:7px;font-size:16px}
 .saved-row .sname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.saved-row .btn.tiny{padding:5px 11px;font-size:15px}
-.saved-row .btn.tiny.del{font-size:17px;padding:4px 8px}
+.saved-row .btn.tiny{padding:6px 12px;font-size:14px}
+.saved-row .btn.tiny.del{font-size:18px;padding:4px 8px}
 
 .mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;
   display:none;align-items:center;justify-content:center}
@@ -187,8 +176,8 @@ body.dragging, body.dragging *{
   outline:2px solid rgba(140,28,28,.18);border-color:var(--brand2)}
 .mask .box .row-btns{margin-top:0;justify-content:flex-end}
 .mask .box .btn{padding:8px 18px;font-size:14px}
-.row-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
-.hint{color:var(--sub);font-size:11.5px}
+.row-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.hint{color:var(--sub);font-size:12px}
 
 .preview-bar{display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap}
 #paperStage{position:relative;width:100%;overflow:hidden}
@@ -241,101 +230,98 @@ body.dragging, body.dragging *{
     <button data-view="preview">预览 · 打印</button>
     <button id="btnFullscreen" title="全屏（横屏请手动旋转手机）">⛶</button>
     <button id="btnCheckUpdate" title="检查更新">🔄</button>
-    <span class="save-hint" id="saveHint">已自动保存</span>
   </nav>
 </div>
 
 <main>
   <!-- ============ 点菜页 ============ -->
   <section id="view-order" class="view active">
-    <div class="order-grid">
-      <div class="card" style="margin-bottom:0">
-        <h3>菜单信息</h3>
-        <label class="fld"><span>日期</span><input type="date" id="fDate"></label>
-        <label class="fld"><span>餐别</span>
-          <select id="fMeal">
-            <option value="早餐">早餐</option><option value="午餐">午餐</option>
-            <option value="晚餐">晚餐</option><option value="午市">午市</option>
-            <option value="晚市">晚市</option><option value="午宴">午宴</option>
-            <option value="晚宴" selected>晚宴</option><option value="其他">其他…</option>
-          </select>
-        </label>
-        <label class="fld" id="fMealOtherWrap" style="display:none"><span>其他餐别</span>
-          <input type="text" id="fMealOther" placeholder="自定义"></label>
-        <label class="fld"><span>客人信息</span>
-          <input type="text" id="fGuest" placeholder="如：吴先生"></label>
-        <label class="fld"><span>人数</span>
-          <input type="number" id="fPeople" min="1" step="1" placeholder="如：8"></label>
-        <label class="fld"><span>配菜人</span>
-          <input type="text" id="fChef" placeholder="如：路"></label>
-        <div style="display:flex;gap:16px;align-items:center;margin:6px 0 8px 0;flex-wrap:nowrap;">
-          <label class="chk" style="margin-bottom:0;"><input type="checkbox" id="showPriceOn"><span>显示菜品价格</span></label>
-          <label class="chk" style="margin-bottom:0;"><input type="checkbox" id="showUnitOn"><span>带 ¥ </span></label>
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:0">
-        <h3>服务费 / 统计</h3>
-        <label class="chk"><input type="checkbox" id="svcOn"><span>收取服务费</span></label>
-        <label class="fld" style="justify-content:flex-start;gap:10px;">
-          <span>比例 %</span>
-          <input type="number" id="svcRate" min="0" step="0.1" value="10" style="max-width:70px;text-align:center;padding:0;">
-          <span style="margin-left:auto;font-size:16px;color:#555;">服务费</span>
-          <b id="sSvc" style="color:var(--brand2);font-size:20px;font-weight:700;margin-left:4px;">¥0</b>
-        </label>
-        <label class="fld"><span>冷菜分列阈值</span>
-          <input type="number" id="fSplitAt" min="2" max="30" step="1" value="6"></label>
-
-        <label class="fld" style="margin-top:6px;"><span>全单备注</span>
-          <input type="text" id="fNoteFull" placeholder="如：少辣、不用香菜"></label>
-        <label class="chk" style="margin-top:4px;"><input type="checkbox" id="showNotesOn"><span>打印显示备注文字</span></label>
-
-        <div class="stat-card" style="display:block;border-top:1px dashed var(--line);margin-top:10px;padding-top:10px;">
-          <div style="display:flex;justify-content:space-between;gap:4px;text-align:center;">
-            <div class="stat" style="flex:1;border-right:1px dashed var(--line);display:flex;flex-direction:column;align-items:center;">
-              <span style="font-size:13px;color:var(--sub);margin-bottom:2px;">菜品金额</span>
-              <b id="sSub" style="color:var(--brand2);font-size:18px;">¥0</b>
-            </div>
-            <div class="stat" style="flex:1;border-right:1px dashed var(--line);display:flex;flex-direction:column;align-items:center;">
-              <span style="font-size:13px;color:var(--sub);margin-bottom:2px;">总计</span>
-              <b id="sTotal" style="color:var(--brand2);font-size:18px;">¥0</b>
-            </div>
-            <div class="stat" style="flex:1;display:flex;flex-direction:column;align-items:center;">
-              <span style="font-size:13px;color:var(--sub);margin-bottom:2px;">人均</span>
-              <b id="sPer" style="color:var(--brand2);font-size:18px;">—</b>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:0">
-        <h3>💾 菜单存档</h3>
-        <label class="fld"><span>名称</span>
-          <input type="text" id="savedName" placeholder="如：婚宴A"></label>
-        <button class="btn primary block" id="btnSaveMenu" style="margin-top:6px">保存当前菜单</button>
-        <div class="saved-list" id="savedList"></div>
+    <div class="card">
+      <h3>菜单信息</h3>
+      <label class="fld"><span>日期</span><input type="date" id="fDate"></label>
+      <label class="fld"><span>餐别</span>
+        <select id="fMeal">
+          <option value="早餐">早餐</option><option value="午餐">午餐</option>
+          <option value="晚餐">晚餐</option><option value="午市">午市</option>
+          <option value="晚市">晚市</option><option value="午宴">午宴</option>
+          <option value="晚宴" selected>晚宴</option><option value="其他">其他…</option>
+        </select>
+      </label>
+      <label class="fld" id="fMealOtherWrap" style="display:none"><span>其他餐别</span>
+        <input type="text" id="fMealOther" placeholder="自定义"></label>
+      <label class="fld"><span>客人信息</span>
+        <input type="text" id="fGuest" placeholder="如：吴先生"></label>
+      <label class="fld"><span>人数</span>
+        <input type="number" id="fPeople" min="1" step="1" placeholder="如：8"></label>
+      <label class="fld"><span>配菜人</span>
+        <input type="text" id="fChef" placeholder="如：路"></label>
+      <div style="display:flex;gap:16px;align-items:center;margin:8px 0 0 0;flex-wrap:nowrap;">
+        <label class="chk"><input type="checkbox" id="showPriceOn"><span>显示菜品价格</span></label>
+        <label class="chk"><input type="checkbox" id="showUnitOn"><span>带 ¥ </span></label>
       </div>
     </div>
 
-    <div class="card" style="margin-top:9px">
+    <div class="card">
       <h3>点选菜品</h3>
       <div class="cat-tabs" id="catTabs"></div>
       <div id="libList" class="dish-lib"></div>
       <div class="search-row">
         <input id="libSearch" placeholder="搜索菜名…（在当前分类下）">
       </div>
-      <div class="row-btns" style="margin-top:9px">
-        <button class="btn" id="btnTempDish">＋ 临时菜</button>
+      <div class="row-btns">
+        <button class="btn" id="btnTempDish" style="width:100%">＋ 临时菜</button>
       </div>
+    </div>
+
+    <div class="card" style="margin-bottom:0">
+      <h3>💾 菜单存档</h3>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom: 10px;">
+        <input type="text" id="savedName" placeholder="输入存档名称，如：婚宴A" style="flex:1; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font-size:15px;">
+        <button class="btn primary" id="btnSaveMenu">保存</button>
+      </div>
+      <div class="saved-list" id="savedList"></div>
     </div>
   </section>
 
   <!-- ============ 已选菜品页 ============ -->
   <section id="view-picked" class="view">
-    <div class="card">
+    
+    <!-- 紧凑版服务费 / 统计卡片 -->
+    <div class="card compact-stats-card">
+      <h3>服务费 / 统计</h3>
+      <div class="stat-row">
+        <label class="chk"><input type="checkbox" id="svcOn"><span>收取服务费</span></label>
+        <label>比例 <input type="number" id="svcRate" min="0" step="0.1" value="10"> %</label>
+        <span>服务费 <b id="sSvc">¥0</b></span>
+      </div>
+      <div class="stat-row">
+        <span style="font-size:15px; color:#333; white-space:nowrap;">全单备注</span>
+        <input type="text" class="input-text" id="fNoteFull" placeholder="如：少辣、不用香菜">
+      </div>
+      <div class="stat-row" style="justify-content:space-between;">
+        <label class="chk"><input type="checkbox" id="showNotesOn"><span>显示全单备注</span></label>
+        <label>冷菜分列阈值 <input type="number" id="fSplitAt" min="2" max="30" step="1" value="6"></label>
+      </div>
+      <div class="stat-row amount-row">
+        <div>
+          <span>菜品金额</span>
+          <b id="sSub">¥0</b>
+        </div>
+        <div>
+          <span>总计</span>
+          <b id="sTotal">¥0</b>
+        </div>
+        <div>
+          <span>人均</span>
+          <b id="sPer">—</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:0">
       <h3>已选菜品
-        <span class="hint" style="margin-left:8px;font-weight:400;font-size:13px;">
-          点击菜品可多选 · 下方调色 / 备注（操作后自动取消选中）
+        <span class="hint" style="margin-left:8px;font-weight:400;">
+          点击可多选
         </span>
       </h3>
       <div id="pickedList" class="picked-list"></div>
@@ -349,8 +335,8 @@ body.dragging, body.dragging *{
         <button class="btn tiny color-btn" data-color="black" style="color:#2b2b2b">● 黑</button>
         <button class="btn tiny color-btn" data-color="gold" style="color:#e6b422;border-color:#e6b422">● 金</button>
         <button class="btn tiny" id="btnNoteSel">📝 备注</button>
-        <button class="btn tiny" id="btnMoveUp" title="同分类内上移">↑</button>
-        <button class="btn tiny" id="btnMoveDown" title="同分类内下移">↓</button>
+        <button class="btn tiny" id="btnMoveUp" title="上移">↑</button>
+        <button class="btn tiny" id="btnMoveDown" title="下移">↓</button>
         <span class="spacer"></span>
         <button class="btn tiny" id="btnUndo" disabled>↩ 撤销</button>
         <button class="btn tiny" id="btnClearPicked">清空</button>
@@ -424,7 +410,6 @@ function ensureIds(arr){
 
 const LS_KEY = 'banquet_menu';
 const LS_SAVED = 'banquet_menu_saved_v1';
-const LS_SAVED_CACHE = 'banquet_menu_saved_cache_v1';
 const LS_LOCAL_VER = 'banquet_menu_local_ver';
 const CATS = ['餐前','冷菜','汤品','热菜','位菜','主食','点心','甜品','酒水','餐后'];
 const CATS_PRINT = ['餐前','冷菜','汤品','热菜','主食','点心','甜品','酒水','餐后'];
@@ -436,19 +421,15 @@ const KAI_FONT = '"LXGW Wen Kai","KaiTi","STKaiti",serif';
 const DEFAULTS = {
   bg:{ type:'color', color:'#fffdf6', image:'', fit:'cover', overlay:0 },
   layout:{
-    pagePadBottom:8,
-    catTop:7, colGap:6, rowGap:2,
-    nameOffsetTop:0, catNameGap:2, catGap:8,
+    pagePadBottom:8, catTop:7, colGap:6, rowGap:2, nameOffsetTop:0, catNameGap:2, catGap:8,
     infoRight:8, infoBottom:30, infoGap:4, infoToFirst:1.5, splitAt:6,
     coldPairGap:2, coldWeiGap:1.5, hotWeiGap:8, coldQtyGap:1.5, hotQtyGap:8,
-    allowOverlap:false,
-    uiFont: DEFAULT_UI_FONT,
+    allowOverlap:false, uiFont: DEFAULT_UI_FONT,
     catFont: KAI_FONT, nameFont: KAI_FONT, infoFont: KAI_FONT,
     catSize:18, nameSize:14, priceSize:14, qtySize:14, infoSize:22,
     catSpacing:0.3, nameSpacing:0.15, infoSpacing:0.15, dateSpacing:0.35,
     boldCat:true, boldName:false, boldInfo:false,
-    catColor:'#1a1a1a', nameColor:'#2b2b2b',
-    priceColor:'#8c1c1c', infoColor:'#1a1a1a',
+    catColor:'#1a1a1a', nameColor:'#2b2b2b', priceColor:'#8c1c1c', infoColor:'#1a1a1a',
     showPrice:false, showQty:true, showUnit:false, showInfo:true,
     infoBox:false, infoBoxPad:2, autoFit:true
   },
@@ -491,28 +472,17 @@ function applyUiFont(){
     S.layout.uiFont || DEFAULT_UI_FONT);
 }
 
-let _saveTimer = null, _saveDebounce = null;
-function showSaved(){
-  const el = $('#saveHint');
-  if(!el) return;
-  el.textContent = '✓ 已自动保存';
-  el.classList.add('flash');
-  clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(() => {
-    el.classList.remove('flash');
-    el.textContent = '已自动保存';
-  }, 1200);
-}
+let _saveDebounce = null;
 function save(){
   clearTimeout(_saveDebounce);
   _saveDebounce = setTimeout(() => {
-    try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); showSaved(); }
-    catch(e){ alert('保存失败：本地存储空间不足（通常是背景图太大）。'); }
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
+    catch(e){ console.warn('本地存储空间不足，保存失败'); }
   }, 300);
 }
 function saveNow(){
   clearTimeout(_saveDebounce);
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); showSaved(); }catch(e){}
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){}
 }
 window.addEventListener('beforeunload', saveNow);
 
@@ -555,7 +525,8 @@ async function sbFetch(path, options){
     'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY,
     'Content-Type': 'application/json', ...(options && options.headers || {})
   };
-  const res = await fetch(url, { ...(options || {}), headers });
+  // 加入 cache: 'no-store'，防止手机浏览器缓存旧的 GET 请求
+  const res = await fetch(url, { cache: 'no-store', ...(options || {}), headers });
   const txt = await res.text();
   if(!res.ok) throw new Error('云端请求失败 (' + res.status + ')：' + txt);
   if(!txt) return null;
@@ -593,6 +564,14 @@ async function pullFromCloud(interactive){
     const keepPrice = S.layout.showPrice;
     const keepUnit  = S.layout.showUnit;
     S.layout = Object.assign(clone(DEFAULTS.layout), d.layout);
+    
+    // 🔥 强制修正字体：如果云端把字体改成了系统字体栈，强制回文楷
+    ['catFont', 'nameFont', 'infoFont'].forEach(k => {
+      if(!S.layout[k] || /apple-system|sans-serif/i.test(S.layout[k])){
+        S.layout[k] = KAI_FONT;
+      }
+    });
+    
     S.layout.showPrice = keepPrice;
     S.layout.showUnit  = keepUnit;
   }
@@ -729,8 +708,10 @@ function dishParts(d, L, peopleNum, isCold){
   const price = +d.price || 0;
   const showQty = L.showQty && qty !== 1;
   const showPrice = L.showPrice && price > 0;
-  const showNotes = S.front.showNotes !== false;
-  const noteStr = (d.note && showNotes) ? '[' + d.note + ']' : '';
+  
+  // 单品备注强制显示，不再受勾选框控制
+  const noteStr = d.note ? '[' + d.note + ']' : '';
+  
   let qtyText = null, gapRatio = 0;
   if(showQty){
     qtyText = (peopleNum > 1 && qty === peopleNum) ? '位' : String(qty);
@@ -1055,7 +1036,7 @@ function renderPaper(){
   }
 }
 
-/* ============ 前台渲染（拆分，减少抖动） ============ */
+/* ============ 前台渲染 ============ */
 function renderCatTabs(){
   const box = $('#catTabs');
   box.innerHTML = '';
@@ -1097,16 +1078,20 @@ function renderLib(){
 function renderPicked(){
   pruneSelected();
   const box = $('#pickedList');
-  const st = box.scrollTop;              // 保留滚动位置，避免跳回顶部
+  const st = box.scrollTop;
   box.innerHTML = '';
   const count = S.front.picked.length;
   $('#pickedEmpty').style.display = count ? 'none' : '';
   const indexed = S.front.picked.map((it, i) => ({ it, i }));
+  
+  // 修改点 1：合并“热菜”和“位菜”的显示排序逻辑
   indexed.sort((a, b) => {
-    const ca = CATS.indexOf(a.it.cat), cb = CATS.indexOf(b.it.cat);
+    const ca = CATS_PRINT.indexOf(printCatOf(a.it.cat));
+    const cb = CATS_PRINT.indexOf(printCatOf(b.it.cat));
     if(ca !== cb) return ca - cb;
     return a.i - b.i;
   });
+  
   indexed.forEach(({ it, i }) => {
     const el = document.createElement('div');
     el.className = 'picked-item' + (SELECTED.has(it._id) ? ' selected' : '');
@@ -1165,7 +1150,7 @@ function addPick(dish){
   save(); renderPicked(); renderStats(); renderPaperSoon();
 }
 
-/* ============ 菜单存档（本地 + 云端双写） ============ */
+/* ============ 菜单存档（强报错提示） ============ */
 function loadSavedLocal(){
   try{ return JSON.parse(localStorage.getItem(LS_SAVED) || '{}'); }
   catch(e){ return {}; }
@@ -1177,7 +1162,8 @@ function saveSavedLocal(o){
 
 async function loadSavedCloud(){
   try{
-    const rows = await sbFetch('saved_menus?select=name,front,saved_at');
+    // 加入 no-store 防止缓存
+    const rows = await sbFetch('saved_menus?select=name,front,saved_at', { cache: 'no-store' });
     const out = {};
     (rows || []).forEach(r => {
       out[r.name] = { front: r.front, savedAt: r.saved_at || 0 };
@@ -1193,18 +1179,14 @@ async function loadSavedMenusAll(){
   const local = loadSavedLocal();
   const cloud = await loadSavedCloud();
   if(cloud === null){
-    let cache = {};
-    try{ cache = JSON.parse(localStorage.getItem(LS_SAVED_CACHE) || '{}'); }
-    catch(e){ cache = {}; }
-    const merged = Object.assign({}, cache, local);
-    merged.__offline = true;
-    return merged;
+    // 断网时使用本地
+    local.__offline = true;
+    return local;
   }
-  try{ localStorage.setItem(LS_SAVED_CACHE, JSON.stringify(cloud)); }
-  catch(e){ console.warn('存档缓存写入失败', e); }
-  const merged = Object.assign({}, local, cloud);
-  merged.__offline = false;
-  return merged;
+  // 云端成功，直接覆盖本地缓存
+  saveSavedLocal(cloud);
+  cloud.__offline = false;
+  return cloud;
 }
 
 async function saveOneMenu(name, data){
@@ -1219,7 +1201,8 @@ async function saveOneMenu(name, data){
     });
     return { ok: true, cloud: true };
   }catch(e){
-    console.warn('云端保存失败', e);
+    console.error('云端保存失败', e);
+    alert('云端保存失败！\n原因：' + e.message + '\n\n请检查数据库权限设置，或联系管理员。');
     return { ok: true, cloud: false };
   }
 }
@@ -1232,7 +1215,8 @@ async function deleteOneMenu(name){
     await sbFetch('saved_menus?name=eq.' + encodeURIComponent(name), { method: 'DELETE' });
     return { ok: true, cloud: true };
   }catch(e){
-    console.warn('云端删除失败', e);
+    console.error('云端删除失败', e);
+    alert('云端删除失败！\n原因：' + e.message);
     return { ok: true, cloud: false };
   }
 }
@@ -1332,7 +1316,10 @@ async function renderPaperCanvas(){
     return null;
   }
   if(document.fonts && document.fonts.ready){
-    try{ await document.fonts.ready; }catch(e){}
+    try{
+      await document.fonts.load('16px "LXGW Wen Kai"');
+      await document.fonts.ready;
+    }catch(e){}
     await new Promise(r => setTimeout(r, 300));
   }
   const paper = $('#paper');
@@ -1499,12 +1486,25 @@ $('#btnSaveMenu').addEventListener('click', async () => {
   delete menus.__offline;
   if(menus[name] && !confirm('已有同名存档「' + name + '」，是否覆盖？')) return;
   const data = { front: snapshotFront(), savedAt: Date.now() };
+  
+  const btn = $('#btnSaveMenu');
+  const oldText = btn.textContent;
+  btn.textContent = '保存中…';
+  btn.disabled = true;
+  
   const r = await saveOneMenu(name, data);
+  
+  btn.textContent = oldText;
+  btn.disabled = false;
+  
   $('#savedName').value = '';
   renderSavedList();
-  toast(r.cloud
-    ? '已保存存档「' + name + '」\n（本地 + 云端）'
-    : '已保存到本地\n（云端同步失败）');
+  
+  if (r.cloud) {
+    toast('已保存存档「' + name + '」\n（本地 + 云端）');
+  } else {
+    // 若云端失败，已在 saveOneMenu 内弹出 alert 报错
+  }
 });
 
 /* 已选菜品交互（点击选中 + 数量增减 + 删除） */
@@ -1524,7 +1524,7 @@ $('#pickedList').addEventListener('click', function(e){
     save(); renderPicked(); renderStats(); renderPaperSoon();
     return;
   }
-  // 点击行 → 切换选中（直接切 class，不重建列表，避免抖动）
+  // 点击行 → 切换选中
   if(e.target.closest('.grip') || e.target.closest('.qty-input')) return;
   const row = e.target.closest('.picked-item');
   if(!row) return;
@@ -1573,7 +1573,8 @@ function onDragMove(e){
   pickBox.querySelectorAll('.over').forEach(x => x.classList.remove('over'));
   if(over && over !== dragState.row){
     const it = S.front.picked[+over.dataset.i];
-    if(it && it.cat === dragState.cat) over.classList.add('over');
+    // 修改点 2：用 printCatOf 判断，让“热菜”和“位菜”视为同类
+    if(it && printCatOf(it.cat) === printCatOf(dragState.cat)) over.classList.add('over');
   }
 }
 function onDragUp(e){
@@ -1592,7 +1593,8 @@ function onDragUp(e){
   const to = +overEl.dataset.i;
   if(isNaN(to) || to === from) return;
   const target = S.front.picked[to];
-  if(!target || target.cat !== cat){ toast('只能在同一类目内调整顺序'); return; }
+  // 修改点 3：用 printCatOf 判断
+  if(!target || printCatOf(target.cat) !== printCatOf(cat)){ toast('只能在同一大类（热菜/位菜）内调整顺序'); return; }
   pushUndo();
   const moved = S.front.picked.splice(from, 1)[0];
   S.front.picked.splice(to, 0, moved);
@@ -1736,7 +1738,8 @@ function moveSelected(dir){
   sel.forEach(({ it }) => {
     const cur = arr.indexOf(it);
     let j = cur + dir;
-    while(j >= 0 && j < arr.length && arr[j].cat !== it.cat) j += dir;
+    // 修改点 4：上移/下移也视为同类
+    while(j >= 0 && j < arr.length && printCatOf(arr[j].cat) !== printCatOf(it.cat)) j += dir;
     if(j >= 0 && j < arr.length) canMove = true;
   });
   if(!canMove){ toast(dir < 0 ? '已经到最前了' : '已经到最后了'); return; }
@@ -1746,7 +1749,7 @@ function moveSelected(dir){
     const cur = arr.indexOf(it);
     if(cur < 0) return;
     let j = cur + dir;
-    while(j >= 0 && j < arr.length && arr[j].cat !== it.cat) j += dir;
+    while(j >= 0 && j < arr.length && printCatOf(arr[j].cat) !== printCatOf(it.cat)) j += dir;
     if(j < 0 || j >= arr.length) return;
     arr.splice(cur, 1);
     arr.splice(j, 0, it);
